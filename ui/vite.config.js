@@ -9,6 +9,13 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+          configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
+            if (req.headers['authorization']) {
+              proxyReq.setHeader('authorization', req.headers['authorization'])
+            }
+          })
+        }
       },
       '/health': {
         target: 'http://localhost:8000',

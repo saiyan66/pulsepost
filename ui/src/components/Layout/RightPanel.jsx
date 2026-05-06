@@ -133,7 +133,7 @@ export default function RightPanel({ navigate }) {
      </div>
     </div>
 
-      <div style={cardStyle}>
+      {/* <div style={cardStyle}>
         <div style={labelStyle}>System</div>
         <div style={{
           fontFamily: 'var(--mono)',
@@ -150,7 +150,7 @@ export default function RightPanel({ navigate }) {
         }}>
           FastAPI / localhost:8000
         </div>
-      </div>
+      </div> */}
     </>
   )
 }
