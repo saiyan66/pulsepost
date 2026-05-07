@@ -114,7 +114,7 @@ export default function Search({ navigate }) {
                 border: 'none',
                 outline: 'none',
                 fontFamily: 'var(--body)',
-                fontSize: 16,
+                fontSize: 14,
                 color: 'var(--ink)',
                 padding: '4px 0',
               }}
@@ -161,21 +161,12 @@ export default function Search({ navigate }) {
         )}
       </div>
 
-      {/* Empty prompt */}
+    
       {!searched && (
         <div style={{
           padding: '60px 32px',
           textAlign: 'center',
         }}>
-          <div style={{
-            fontFamily: 'var(--serif)',
-            fontSize: 18,
-            color: 'var(--text3)',
-            fontStyle: 'italic',
-            marginBottom: 8,
-          }}>
-            What are you looking for?
-          </div>
           <div style={{
             fontFamily: 'var(--mono)',
             fontSize: 11,
@@ -282,7 +273,6 @@ export default function Search({ navigate }) {
   )
 }
 
-// ── User row in search results ───────────────────────────────────
 function UserRow({ user, currentUser, onClick }) {
   function initials(username) {
     return (username || '?').slice(0, 2).toUpperCase()

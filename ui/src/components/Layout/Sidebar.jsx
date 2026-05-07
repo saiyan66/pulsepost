@@ -65,7 +65,7 @@ export default function Sidebar({ currentPage, navigate }) {
       </div>
 
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-        <div style={{
+        {/* <div style={{
           fontFamily: 'var(--mono)',
           fontSize: 9,
           color: 'var(--text3)',
@@ -82,7 +82,7 @@ export default function Sidebar({ currentPage, navigate }) {
           fontFamily: 'var(--mono)',
         }}>
           PulsePost — a social blogging platform.
-        </p>
+        </p> */}
       </div>
     </aside>
   )

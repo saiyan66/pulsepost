@@ -169,7 +169,7 @@ class PostService:
         await db.delete(post)
         await db.flush()
 
-    # ── Comment methods ──────────────────────────────────────────────
+    # ── Comment methods 
 
     @staticmethod
     async def create_comment(

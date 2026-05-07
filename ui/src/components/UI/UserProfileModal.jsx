@@ -226,7 +226,7 @@ export default function UserProfileModal({ userId, onClose }) {
                   </div>
                 </div>
 
-                {/* Follow button — only shown if not viewing your own profile */}
+              
                 {!isMe && currentUser && (
                   <button
                     onClick={toggleFollow}
@@ -391,7 +391,6 @@ export default function UserProfileModal({ userId, onClose }) {
         )}
       </div>
 
-      {/* Nested post detail */}
       {selectedPost && (
         <PostDetail
           post={selectedPost}

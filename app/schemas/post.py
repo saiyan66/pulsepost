@@ -45,8 +45,6 @@ class PostUpdateSchema(BaseModel):
 class PostAuthorSchema(BaseModel):
     """
     A minimal user representation embedded inside a post response.
-    We don't want to return the full user object — just enough to
-    display the author's name and link to their profile.
     """
     model_config = ConfigDict(from_attributes=True)
 
