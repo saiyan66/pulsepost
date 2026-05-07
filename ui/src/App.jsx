@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useAuth } from './utils/Auth.jsx'
+import { useWebSocket } from './hooks/useWebSocket.js'
 import AppLayout from './components/Layout/AppLayout.jsx'
 import Header from './components/Layout/Header.jsx'
 import Sidebar from './components/Layout/Sidebar.jsx'
@@ -42,12 +43,21 @@ function LoadingScreen() {
 }
 
 export default function App() {
-  const { loading } = useAuth()
-  const [page, setPage]           = useState('feed')
-  const [showAuth, setShowAuth]   = useState(false)
+  const { loading, user, token } = useAuth()
+  const [page, setPage] = useState('feed')
+  const [showAuth, setShowAuth] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
-  if (loading) return <LoadingScreen />
 
+  function addNotification(notif) {
+    setNotifications(prev => [notif, ...prev].slice(0, 20))
+    setUnreadCount(prev => prev + 1)
+  }
+
+  function clearUnread() {
+    setUnreadCount(0)
+  }
 
   function navigate(target) {
     if (target === 'auth') {
@@ -56,6 +66,42 @@ export default function App() {
     }
     setPage(target)
   }
+
+
+  const handleWsMessage = useCallback((msg) => {
+    switch(msg.type) {
+      case 'new_post':
+        if (msg.author_id !== user?.id) {
+          addNotification({
+            id: Date.now(),
+            type: 'new_post',
+            text: `${msg.author} published "${msg.title}"`,
+            postId: msg.post_id,
+          })
+        }
+        break
+      case 'new_follower':
+        addNotification({
+          id: Date.now(),
+          type: 'new_follower',
+          text: `${msg.follower} started following you`,
+        })
+        break
+      case 'new_comment':
+        addNotification({
+          id: Date.now(),
+          type: 'new_comment',
+          text: `${msg.commenter} commented on "${msg.post_title}"`,
+          postId: msg.post_id,
+        })
+        break
+    }
+  }, [user?.id])
+
+  useWebSocket(token, handleWsMessage)
+
+
+  if (loading) return <LoadingScreen />
 
   const pages = {
     feed:    <Feed    navigate={navigate} />,
@@ -68,7 +114,15 @@ export default function App() {
   return (
     <>
       <AppLayout
-        header={<Header currentPage={page} navigate={navigate} />}
+        header={
+          <Header
+            currentPage={page}
+            navigate={navigate}
+            unreadCount={unreadCount}
+            notifications={notifications}
+            onNotificationsOpen={clearUnread}
+          />
+        }
         sidebar={<Sidebar currentPage={page} navigate={navigate} />}
         rightPanel={<RightPanel navigate={navigate} />}
       >

@@ -5,6 +5,7 @@ from sqlalchemy import select, desc, or_
 from app.core.database import get_db
 from app.core.cache import get_cached, set_cached, delete_cached, delete_pattern
 from app.api.deps import get_current_user
+from app.api.websockets.manager import manager
 from app.models.user import User
 from app.schemas.post import (
     PostCreateSchema, PostUpdateSchema, PostResponseSchema,
@@ -31,6 +32,14 @@ async def create_post(
 
     # Invalidate list cache — new post means cached lists are stale
     await delete_pattern("posts:list:*")
+
+    await manager.broadcast({
+        "type": "new_post",
+        "post_id": str(post.id),
+        "title": post.title,
+        "author": current_user.username,
+        "author_id": str(current_user.id),
+    })
 
     return post
 
@@ -198,6 +207,14 @@ async def create_comment(
         raise HTTPException(status_code=404, detail="Post not found")
 
     comment = await PostService.create_comment(db, post_id, current_user.id, data)
+
+    if str(post.author_id) != str(current_user.id):
+        await manager.send_to(str(post.author_id), {
+            "type": "new_comment",
+            "post_id": str(post_id),
+            "post_title": post.title,
+            "commenter": current_user.username,
+    })
     return comment
 
 

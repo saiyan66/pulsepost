@@ -1,7 +1,7 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.api.websockets.manager import manager
 from app.core.database import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
@@ -60,7 +60,12 @@ async def follow_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Already following this user",
         )
-
+    
+    await manager.send_to(str(user_id), {
+        "type": "new_follower",
+        "follower": current_user.username,
+        "follower_id": str(current_user.id),
+     })
 
 @router.delete("/{user_id}/follow", status_code=204)
 async def unfollow_user(
