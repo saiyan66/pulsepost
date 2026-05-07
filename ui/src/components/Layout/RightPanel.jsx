@@ -1,8 +1,22 @@
-// src/components/Layout/RightPanel.jsx
 import { useAuth } from '../../utils/Auth.jsx'
+import { useState, useEffect } from 'react'
+import { usersApi } from '../../api/client.js'
 
 export default function RightPanel({ navigate }) {
   const { user } = useAuth()
+
+const [counts, setCounts] = useState({ following: 0, followers: 0 })
+
+
+useEffect(() => {
+  if (!user) return
+  Promise.all([
+    usersApi.following(user.id),
+    usersApi.followers(user.id),
+  ]).then(([following, followers]) => {
+    setCounts({ following: following.length, followers: followers.length })
+  }).catch(() => {})
+  }, [user?.id])
 
   const cardStyle = {
     background: 'var(--paper)',
@@ -103,13 +117,11 @@ export default function RightPanel({ navigate }) {
       gap: 16,
     }}>
       <div style={{ textAlign: 'center' }}>
+      <div style={{ fontFamily: 'var(--serif)', fontSize: 18, color: 'var(--ink)' }}>
+        {counts.following}
+       </div>
         <div style={{
-          fontFamily: 'var(--serif)',
-          fontSize: 18,
-          color: 'var(--ink)',
-        }}>—</div>
-        <div style={{
-          fontFamily: 'var(--mono)',
+          fontFamily: 'var(--sans)',
           fontSize: 9,
           color: 'var(--text3)',
           letterSpacing: '0.1em',
@@ -117,13 +129,11 @@ export default function RightPanel({ navigate }) {
         }}>Following</div>
       </div>
       <div style={{ textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--serif)', fontSize: 18, color: 'var(--ink)' }}>
+          {counts.followers}
+        </div>
         <div style={{
-          fontFamily: 'var(--serif)',
-          fontSize: 18,
-          color: 'var(--ink)',
-        }}>—</div>
-        <div style={{
-          fontFamily: 'var(--mono)',
+          fontFamily: 'var(--sans)',
           fontSize: 9,
           color: 'var(--text3)',
           letterSpacing: '0.1em',

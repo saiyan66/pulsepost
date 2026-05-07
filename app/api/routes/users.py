@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -10,6 +10,16 @@ from app.services.follow import FollowService
 from app.services.user import UserService
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
+
+
+
+@router.get("/search", response_model=list[UserResponseSchema])
+async def search_users(
+    q: str = Query(min_length=1),
+    db: AsyncSession = Depends(get_db),
+):
+    users = await FollowService.search_users(db, q)
+    return users
 
 
 @router.get("/{user_id}", response_model=UserResponseSchema)
@@ -91,3 +101,5 @@ async def get_following(
         raise HTTPException(status_code=404, detail="User not found")
 
     return await FollowService.get_following(db, user_id)
+
+

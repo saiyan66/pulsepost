@@ -1,7 +1,7 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy import select, desc, or_
 from app.core.database import get_db
 from app.core.cache import get_cached, set_cached, delete_cached, delete_pattern
 from app.api.deps import get_current_user
@@ -15,7 +15,7 @@ from app.services.post import PostService
 router = APIRouter(prefix="/api/posts", tags=["Posts"])
 
 
-# ── Post endpoints ───────────────────────────────────────────────────
+# ── Post endpoints 
 
 @router.post("", response_model=PostResponseSchema, status_code=201)
 async def create_post(
@@ -52,6 +52,20 @@ async def get_feed(
     return feed
 
 
+@router.get("/search", response_model=dict)
+async def search_posts(
+    q: str = Query(min_length=1),
+    db: AsyncSession = Depends(get_db),
+):
+    posts = await PostService.search_posts(db, q)
+    return {
+        "posts": [
+            PostResponseSchema.model_validate(p).model_dump(mode="json")
+            for p in posts
+        ]
+    }
+
+
 @router.get("", response_model=PostListResponseSchema)
 async def get_posts(
     limit: int = Query(default=10, ge=1, le=50),
@@ -66,11 +80,11 @@ async def get_posts(
     cache_key = f"posts:list:{limit}:{cursor}"
     cached = await get_cached(cache_key)
     if cached:
-        return cached      # return cached data directly — no DB query
+        return cached      # return cached data directly (no DB query)
 
     result = await PostService.get_posts(db, limit, cursor)
 
-    # Serialize for caching — UUIDs and datetimes need str conversion
+    # Serialize for caching (UUIDs and datetimes need str conversion)
     cacheable = {
         "items": [
             {**PostResponseSchema.model_validate(p).model_dump(mode="json")}
@@ -170,7 +184,7 @@ async def delete_post(
     await delete_pattern("posts:list:*")
 
 
-# ── Comment endpoints ────────────────────────────────────────────────
+# ── Comment endpoints
 
 @router.post("/{post_id}/comments", response_model=CommentResponseSchema, status_code=201)
 async def create_comment(
@@ -219,3 +233,5 @@ async def delete_comment(
         )
 
     await PostService.delete_comment(db, comment)
+
+

@@ -85,3 +85,12 @@ class FollowService:
             .where(Follow.follower_id == user_id)
         )
         return result.scalars().all()
+    
+    @staticmethod
+    async def search_users(db: AsyncSession, q: str) -> list[User]:
+        result = await db.execute(
+        select(User)
+        .where(User.username.ilike(f"%{q}%"))
+        .limit(10)
+    )
+        return result.scalars().all()

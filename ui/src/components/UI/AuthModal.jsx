@@ -78,7 +78,8 @@ export default function AuthModal({ onClose, onSuccess }) {
 
   return (
     <div
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onMouseDown={e => {
+      if (e.target === e.currentTarget) onClose() }}
       style={{
         position: 'fixed',
         inset: 0,

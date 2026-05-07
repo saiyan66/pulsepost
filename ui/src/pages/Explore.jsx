@@ -3,6 +3,7 @@ import { postsApi } from '../api/client.js'
 import { useToast } from '../components/UI/Toast.jsx'
 import PostCard from '../components/Post/PostCard.jsx'
 import PostDetail from '../components/Post/PostDetail.jsx'
+import UserProfileModal from '../components/UI/UserProfileModal.jsx'
 
 export default function Explore({ navigate }) {
   const toast = useToast()
@@ -12,6 +13,7 @@ export default function Explore({ navigate }) {
   const [hasMore, setHasMore]       = useState(false)
   const [cursor, setCursor]         = useState(null)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [selectedUser, setSelectedUser] = useState(null)
 
   useEffect(() => { loadPosts() }, [])
 
@@ -112,6 +114,7 @@ export default function Explore({ navigate }) {
           post={post}
           index={i}
           onClick={() => setSelected(post)}
+          onAuthorClick={(userId) => setSelectedUser(userId)}
         />
       ))}
 
@@ -144,6 +147,13 @@ export default function Explore({ navigate }) {
           onClose={() => setSelected(null)}
         />
       )}
+
+      {selectedUser && (
+      <UserProfileModal
+        userId={selectedUser}
+        onClose={() => setSelectedUser(null)}
+      />
+    )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>

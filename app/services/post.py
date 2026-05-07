@@ -1,8 +1,7 @@
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, or_
 from sqlalchemy.orm import selectinload
-
 from app.models.post import Post
 from app.models.comment import Comment
 from app.models.follow import Follow
@@ -221,3 +220,20 @@ class PostService:
     async def delete_comment(db: AsyncSession, comment: Comment) -> None:
         await db.delete(comment)
         await db.flush()
+
+
+    @staticmethod
+    async def search_posts(db: AsyncSession, q: str) -> list[Post]:
+        result = await db.execute(
+        select(Post)
+        .options(selectinload(Post.author))
+        .where(
+            or_(
+                Post.title.ilike(f"%{q}%"),
+                Post.content.ilike(f"%{q}%"),
+            )
+        )
+        .order_by(desc(Post.created_at))
+        .limit(20)
+    )
+        return result.scalars().all()     

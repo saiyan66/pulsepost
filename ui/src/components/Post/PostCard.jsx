@@ -12,7 +12,7 @@ function initials(username) {
   return (username || '?').slice(0, 2).toUpperCase()
 }
 
-export default function PostCard({ post, onClick, onDelete, index = 0 }) {
+export default function PostCard({ post, onClick, onDelete, onAuthorClick, index = 0 }) {
   const isOwner = onDelete !== undefined
 
   return (
@@ -50,13 +50,22 @@ export default function PostCard({ post, onClick, onDelete, index = 0 }) {
         }}>
           {initials(post.author?.username)}
         </div>
-        <span style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 12,
-          color: 'var(--text2)',
-          fontWeight: 500,
-        }}>
-          {post.author?.username || 'unknown'}
+        <span
+          onClick={e => {
+            e.stopPropagation()   // don't open the post
+            if (onAuthorClick) onAuthorClick(post.author?.id)
+          }}
+          style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 12,
+            color: 'var(--text2)',
+            fontWeight: 500,
+            cursor: onAuthorClick ? 'pointer' : 'default',
+            textDecoration: onAuthorClick ? 'underline' : 'none',
+            textUnderlineOffset: 3,
+          }}
+        >
+          @{post.author?.username || 'unknown'}
         </span>
         <span style={{ color: 'var(--border2)', fontSize: 10 }}>·</span>
         <span style={{

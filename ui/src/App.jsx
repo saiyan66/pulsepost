@@ -9,6 +9,7 @@ import Feed from './pages/Feed.jsx'
 import Explore from './pages/Explore.jsx'
 import Write from './pages/Write.jsx'
 import Profile from './pages/Profile.jsx'
+import Search from './pages/Search.jsx'
 
 function LoadingScreen() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
     explore: <Explore navigate={navigate} />,
     write:   <Write   navigate={navigate} />,
     profile: <Profile navigate={navigate} />,
+    search:  <Search  navigate={navigate} />,
   }
 
   return (

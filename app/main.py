@@ -6,7 +6,6 @@ from app.api.routes import users
 app = FastAPI(
     title="PulsePost",
     version="0.1.0",
-    # description="A real-time social blogging platform",
 )
 
 

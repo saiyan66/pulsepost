@@ -49,6 +49,7 @@ export default function Header({ currentPage, navigate }) {
         {[
           { label: 'Feed',    page: 'feed'    },
           { label: 'Explore', page: 'explore' },
+          { label: 'Search',  page: 'search'  },
         ].map(({ label, page }) => (
           <button
             key={page}
@@ -70,9 +71,11 @@ export default function Header({ currentPage, navigate }) {
           >
             {label}
           </button>
+          
         ))}
       </nav>
 
+      
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
      

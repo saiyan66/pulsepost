@@ -69,6 +69,10 @@ export const postsApi = {
 
   delete: (id) =>
     request('DELETE', `/api/posts/${id}`),
+
+  search: (q) =>
+  request('GET', `/api/posts/search?q=${encodeURIComponent(q)}`, null, false),
+
 };
 
 
@@ -99,4 +103,8 @@ export const usersApi = {
 
   following: (id) =>
     request('GET', `/api/users/${id}/following`, null, false),
+
+  search: (q) =>
+  request('GET', `/api/users/search?q=${encodeURIComponent(q)}`, null, false),
+
 };
