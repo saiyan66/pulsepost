@@ -1,34 +1,39 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../utils/Auth.jsx'
-import { usersApi } from '../../api/client.js'
+import { usersApi, postsApi } from '../../api/client.js'
 import UserProfileModal from '../UI/UserProfileModal.jsx'
+import likeOutlined from '../../images/like-outlined.svg'
+import eyeIcon from '../../images/eye.svg'
 
 function initials(username) {
   return (username || '?').slice(0, 2).toUpperCase()
 }
 
-export default function RightPanel({ navigate }) {
+export default function RightPanel({ navigate, onTopPostClick }) {
   const { user } = useAuth()
   const [counts, setCounts] = useState({ following: 0, followers: 0 })
   const [followingList, setFollowingList] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
+  const [topPosts, setTopPosts] = useState([])
 
 
 
-   const fetchFollowData = async () => {
+  const fetchData = async () => {
     if (!user) return
     setLoading(true)
     try {
-      const [following, followers] = await Promise.all([
+      const [following, followers, top] = await Promise.all([
         usersApi.following(user.id),
         usersApi.followers(user.id),
+        postsApi.topPosts().catch(() => [])
       ])
       setFollowingList(following)
       setCounts({
         following: following.length,
         followers: followers.length,
       })
+      setTopPosts(top || [])
     } catch (err) {
       console.error(err)
     } finally {
@@ -38,34 +43,34 @@ export default function RightPanel({ navigate }) {
 
 
   useEffect(() => {
-    fetchFollowData()
+    fetchData()
   }, [user?.id])   
 
   // Listen for follow/unfollow events and refresh the data
   useEffect(() => {
     const handleFollowChange = (event) => {
-      fetchFollowData()
+      fetchData()
     }
     window.addEventListener('follow-data-changed', handleFollowChange)
     return () => window.removeEventListener('follow-data-changed', handleFollowChange)
   }, [user])
 
   
-  useEffect(() => {
-    if (!user) return
-    setLoading(true)
-    Promise.all([
-      usersApi.following(user.id),
-      usersApi.followers(user.id),
-    ]).then(([following, followers]) => {
-      setFollowingList(following)
-      setCounts({
-        following: following.length,
-        followers: followers.length,
-      })
-    }).catch(() => {})
-    .finally(() => setLoading(false))
-  }, [user?.id])
+  // useEffect(() => {
+  //   if (!user) return
+  //   setLoading(true)
+  //   Promise.all([
+  //     usersApi.following(user.id),
+  //     usersApi.followers(user.id),
+  //   ]).then(([following, followers]) => {
+  //     setFollowingList(following)
+  //     setCounts({
+  //       following: following.length,
+  //       followers: followers.length,
+  //     })
+  //   }).catch(() => {})
+  //   .finally(() => setLoading(false))
+  // }, [user?.id])
 
 
   const sectionLabel = {
@@ -333,19 +338,71 @@ export default function RightPanel({ navigate }) {
         </div>
       )}
 
-      {/* Top Picks placeholder(feature later) */}
-      <div style={{ ...section, borderBottom: 'none', paddingTop: 7}}>
+    {/* Top Picks */}
+      <div style={{ paddingTop: 4 }}>
         <span style={sectionLabel}>Top Picks</span>
-        <p style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 11,
-          color: 'var(--text3)',
-          lineHeight: 1.6,
-          margin: 0,
-          fontStyle: 'italic',
-        }}>
-          most liked posts will appear here.
-        </p>
+        {topPosts.length === 0 ? (
+          <p style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 11,
+            color: 'var(--text3)',
+            lineHeight: 1.6,
+            margin: 0,
+          }}>
+            No liked posts yet.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {topPosts.map((post, i) => (
+              <div
+                key={post.id}
+                style={{ cursor: 'pointer' }}
+                onClick={() => onTopPostClick?.(post)}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                }}>
+                  <span style={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: 10,
+                    color: 'var(--text3)',
+                    marginTop: 2,
+                    flexShrink: 0,
+                    width: 14,
+                  }}>
+                    {i + 1}.
+                  </span>
+                  <div>
+                    <div style={{
+                      fontFamily: 'var(--serif)',
+                      fontSize: 13,
+                      color: 'var(--ink)',
+                      lineHeight: 1.35,
+                      marginBottom: 3,
+                    }}
+                    onMouseOver={e => e.currentTarget.style.color = 'var(--accent)'}
+                    onMouseOut={e => e.currentTarget.style.color = 'var(--ink)'}
+                    >
+                      {post.title}
+                    </div>
+                    <div style={{
+                      fontFamily: 'var(--mono)',
+                      fontSize: 9,
+                      color: 'var(--text3)',
+                      display: 'flex',
+                      gap: 8,
+                    }}>
+                      {/* <span><img src={likeOutlined} alt="likes" style={{ width: 12, height: 12, display: 'block' }} /> </span>
+                      <span> <img src={eyeIcon} alt="views" style={{ width: 12, height: 12, display: 'block' }} /> </span> */}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={{ paddingTop: 4 }}>

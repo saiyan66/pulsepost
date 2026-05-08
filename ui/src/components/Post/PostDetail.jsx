@@ -1,8 +1,11 @@
-// src/components/Post/PostDetail.jsx
 import { useState, useEffect } from 'react'
 import { commentsApi, postsApi } from '../../api/client.js'
 import { useAuth } from '../../utils/Auth.jsx'
 import { useToast } from '../UI/Toast.jsx'
+import likeOutlined from '../../images/like-outlined.svg'
+import likeFilled from '../../images/like-filled.svg'
+import eyeIcon from '../../images/eye.svg'
+
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000
@@ -22,21 +25,34 @@ export default function PostDetail({ post, onClose, onPostUpdated }) {
   const { user } = useAuth()
   const toast = useToast()
 
-  const [comments, setComments]     = useState([])
-  const [loadingC, setLoadingC]     = useState(true)
-  const [comment, setComment]       = useState('')
+  const [comments, setComments] = useState([])
+  const [loadingC, setLoadingC] = useState(true)
+  const [comment, setComment]  = useState('')
   const [submitting, setSubmitting] = useState(false)
-
-  const [editing, setEditing]       = useState(false)
-  const [editTitle, setEditTitle]   = useState(post.title)
+  const [editing, setEditing] = useState(false)
+  const [editTitle, setEditTitle] = useState(post.title)
   const [editContent, setEditContent] = useState(post.content)
-  const [saving, setSaving]         = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [liked, setLiked] = useState(false)
+  const [likesCount, setLikesCount] = useState(post.likes_count || 0)
+  const [liking, setLiking] = useState(false)
+
 
   const isAuthor = user && user.id === post.author_id
+
+
+  useEffect(() => {   
+    if (!user) return
+    postsApi.isLiked(post.id)
+      .then(data => setLiked(data.liked))
+      .catch(() => {})
+  }, [post.id, user])
+
 
   useEffect(() => {
     loadComments()
   }, [post.id])
+
 
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose() }
@@ -55,6 +71,27 @@ export default function PostDetail({ post, onClose, onPostUpdated }) {
       setLoadingC(false)
     }
   }
+
+  async function toggleLike() {
+  if (!user) { toast('Sign in to like posts', 'error'); return }
+  setLiking(true)
+  try {
+    if (liked) {
+        await postsApi.unlike(post.id)
+        setLiked(false)
+        setLikesCount(prev => Math.max(0, prev - 1))
+      } else {
+        await postsApi.like(post.id)
+        setLiked(true)
+        setLikesCount(prev => prev + 1)
+      }
+    } catch(e) {
+      toast(e.message, 'error')
+   } finally {
+      setLiking(false)
+    }
+  }
+
 
   async function submitComment(e) {
     e.preventDefault()
@@ -330,6 +367,65 @@ export default function PostDetail({ post, onClose, onPostUpdated }) {
                 whiteSpace: 'pre-wrap',
               }}>
                 {post.content}
+              </div>
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 20,
+                marginTop: 28,
+                paddingTop: 16,
+                borderTop: '1px solid var(--border)',
+              }}>
+                <button
+                  onClick={toggleLike}
+                  disabled={liking}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: 'transparent',
+                    border: liked ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    borderRadius: 'var(--radius)',
+                    padding: '5px 14px',
+                    fontFamily: 'var(--mono)',
+                    fontSize: 12,
+                    color: liked ? 'var(--accent)' : 'var(--text3)',
+                    cursor: user ? 'pointer' : 'default',
+                    transition: 'all 0.15s',
+                    outline: 'none', 
+                  }}
+                  onMouseOver={e => {
+                    if (user && !liking) {
+                      e.currentTarget.style.borderColor = 'var(--accent)'
+                      e.currentTarget.style.color = 'var(--accent)'
+                    }
+                  }}
+                  onMouseOut={e => {
+                    if (!liked) {
+                      e.currentTarget.style.borderColor = 'var(--border)'
+                      e.currentTarget.style.color = 'var(--text3)'
+                    }
+                  }}
+                >
+                 {liked ? (
+                    <img src={likeFilled} alt="liked" style={{ width: 14, height: 14, display: 'block' }} />
+                  ) : (
+                    <img src={likeOutlined} alt="like" style={{ width: 14, height: 14, display: 'block' }} />
+                  )}
+                </button>
+                
+                <span style={{
+                  fontFamily: 'var(--mono)',
+                  fontSize: 11,
+                  color: 'var(--text3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                }}>
+                  <img src={eyeIcon} alt="views" style={{ width: 14, height: 14, display: 'block' }} />
+                  {post.views_count || 0} views
+                </span>
               </div>
             </>
           )}

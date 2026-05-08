@@ -1,3 +1,8 @@
+import likeOutlined from '../../images/like-outlined.svg'
+import eyeIcon from '../../images/eye.svg'
+
+
+
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000
   if (diff < 60)    return 'just now'
@@ -136,26 +141,53 @@ export default function PostCard({ post, onClick, onDelete, onAuthorClick, index
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 16,
+        justifyContent: 'space-between',
+        marginTop: 12,
       }}>
+     
         <span style={{
           fontFamily: 'var(--mono)',
           fontSize: 11,
           color: 'var(--accent)',
           letterSpacing: '0.04em',
+          cursor: 'pointer',
         }}>
           Read →
         </span>
-        {post.likes_count > 0 && (
-          <span style={{
+      
+     
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+        }}>
+          {/* Likes */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
             fontFamily: 'var(--mono)',
-            fontSize: 10,
+            fontSize: 11,
             color: 'var(--text3)',
           }}>
-            {post.likes_count} likes
-          </span>
-        )}
+            <img src={likeOutlined} alt="likes" style={{ width: 12, height: 12, display: 'block' }} />
+            <span>{post.likes_count || 0}</span>
+          </div>
+        
+  
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
+            fontFamily: 'var(--mono)',
+            fontSize: 11,
+            color: 'var(--text3)',
+          }}>
+            <img src={eyeIcon} alt="views" style={{ width: 12, height: 12, display: 'block' }} />
+            <span>{post.views_count || 0}</span>
+          </div>
       </div>
-    </article>
+    </div>
+  </article>
   )
 }

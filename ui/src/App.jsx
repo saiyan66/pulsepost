@@ -6,6 +6,7 @@ import Header from './components/Layout/Header.jsx'
 import Sidebar from './components/Layout/Sidebar.jsx'
 import RightPanel from './components/Layout/RightPanel.jsx'
 import AuthModal from './components/UI/AuthModal.jsx'
+import PostDetail from './components/Post/PostDetail.jsx'
 import Feed from './pages/Feed.jsx'
 import Explore from './pages/Explore.jsx'
 import Write from './pages/Write.jsx'
@@ -48,6 +49,7 @@ export default function App() {
   const [showAuth, setShowAuth] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [selectedTopPost, setSelectedTopPost] = useState(null)
 
 
   function addNotification(notif) {
@@ -104,11 +106,11 @@ export default function App() {
   if (loading) return <LoadingScreen />
 
   const pages = {
-    feed:    <Feed    navigate={navigate} />,
+    feed: <Feed    navigate={navigate} />,
     explore: <Explore navigate={navigate} />,
-    write:   <Write   navigate={navigate} />,
+    write: <Write   navigate={navigate} />,
     profile: <Profile navigate={navigate} />,
-    search:  <Search  navigate={navigate} />,
+    search: <Search  navigate={navigate} />,
   }
 
   return (
@@ -124,8 +126,9 @@ export default function App() {
           />
         }
         sidebar={<Sidebar currentPage={page} navigate={navigate} />}
-        rightPanel={<RightPanel navigate={navigate} />}
-      >
+        rightPanel={<RightPanel navigate={navigate}
+                    onTopPostClick={post => setSelectedTopPost(post)} />
+                  }>
         {pages[page] || pages.feed}
       </AppLayout>
 
@@ -134,6 +137,13 @@ export default function App() {
           onClose={() => setShowAuth(false)}
           onSuccess={() => setPage('feed')}
         />
+      )}
+
+      {selectedTopPost && (
+         <PostDetail
+           post={selectedTopPost}
+           onClose={() => setSelectedTopPost(null)}
+         />
       )}
     </>
   )

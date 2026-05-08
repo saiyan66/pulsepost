@@ -47,15 +47,6 @@ export default function Header({
         }}
       >
         PulsePost
-        <span style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 9,
-          color: 'var(--text3)',
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-        }}>
-          beta
-        </span>
       </div>
 
   
