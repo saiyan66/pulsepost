@@ -1,6 +1,6 @@
-// src/components/Layout/Header.jsx
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../utils/Auth.jsx'
+import bellIcon from '../../images/bell.svg';
 
 export default function Header({
   currentPage,
@@ -93,7 +93,7 @@ export default function Header({
       </nav>
 
   
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
         {user && (
           <>
@@ -129,7 +129,7 @@ export default function Header({
                   e.currentTarget.style.borderColor = 'var(--border)'
                 }}
               >
-                ◎
+                <img src={bellIcon} alt="notifications" style={{ width: 15, height: 15 }} />
                 {unreadCount > 0 && (
                   <span style={{
                     position: 'absolute',
@@ -260,7 +260,7 @@ export default function Header({
             <button
               onClick={logout}
               style={{
-                padding: '4px 14px',
+                padding: '4px 8px',
                 background: 'transparent',
                 color: 'var(--text3)',
                 border: '1px solid var(--border)',
@@ -275,7 +275,7 @@ export default function Header({
               onMouseOver={e => e.currentTarget.style.borderColor = 'var(--border2)'}
               onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border)'}
             >
-              Out
+              sign out
             </button>
           </>
         )}

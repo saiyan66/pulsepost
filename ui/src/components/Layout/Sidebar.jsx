@@ -1,9 +1,9 @@
 import { useAuth } from '../../utils/Auth.jsx'
 
 const navItems = [
-  { page: 'feed',    label: 'Home Feed',  symbol: '◈' },
-  { page: 'explore', label: 'Explore',    symbol: '○' },
-   { page: 'search',  label: 'Search',     symbol: '⌕' },
+  { page: 'feed',    label: 'Home', symbol: '◈' },
+  { page: 'explore', label: 'Explore', symbol: '○' },
+   { page: 'search',  label: 'Search', symbol: '⌕' },
   { page: 'profile', label: 'Profile', symbol: '◇' },
 ]
 
@@ -31,7 +31,7 @@ export default function Sidebar({ currentPage, navigate }) {
         })}
       </div>
 
-      {/* Nav */}
+   
       <div style={{ marginBottom: 24 }}>
         {navItems.map(({ page, label, symbol }) => (
           <button

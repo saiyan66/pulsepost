@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../utils/Auth.jsx'
 import { usersApi } from '../../api/client.js'
+import UserProfileModal from '../UI/UserProfileModal.jsx'
 
 function initials(username) {
   return (username || '?').slice(0, 2).toUpperCase()
@@ -11,7 +12,9 @@ export default function RightPanel({ navigate }) {
   const [counts, setCounts] = useState({ following: 0, followers: 0 })
   const [followingList, setFollowingList] = useState([])
   const [loading, setLoading] = useState(false)
+  const [selectedUser, setSelectedUser] = useState(null)
 
+  
   useEffect(() => {
     if (!user) return
     setLoading(true)
@@ -215,15 +218,20 @@ export default function RightPanel({ navigate }) {
         <div style={section}>
           <span style={sectionLabel}>Following</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {followingList.slice(0, 5).map(u => (
+           {followingList.slice(0, 5).map(u => (
               <div
                 key={u.id}
+                onClick={() => setSelectedUser(u.id)}  
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
                   cursor: 'pointer',
+                  padding: '4px 0',
+                  transition: 'opacity 0.1s',
                 }}
+                onMouseOver={e => e.currentTarget.style.opacity = '0.7'}
+                onMouseOut={e => e.currentTarget.style.opacity = '1'}
               >
                 <div style={{
                   width: 24, height: 24,
@@ -322,6 +330,13 @@ export default function RightPanel({ navigate }) {
         </span> */}
       </div>
 
-    </div>
+      {selectedUser && (
+        <UserProfileModal
+          userId={selectedUser}
+          onClose={() => setSelectedUser(null)}
+        />
+      )}
+      
+  </div>
   )
 }

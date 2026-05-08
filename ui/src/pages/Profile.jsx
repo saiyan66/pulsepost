@@ -4,6 +4,7 @@ import { useAuth } from '../utils/Auth.jsx'
 import { useToast } from '../components/UI/Toast.jsx'
 import PostCard from '../components/Post/PostCard.jsx'
 import PostDetail from '../components/Post/PostDetail.jsx'
+import UserListModal from '../components/UI/UserListModal.jsx'
 
 function initials(username) {
   return (username || '?').slice(0, 2).toUpperCase()
@@ -13,11 +14,12 @@ export default function Profile({ navigate }) {
   const { user } = useAuth()
   const toast = useToast()
 
-  const [posts, setPosts]           = useState([])
-  const [loading, setLoading]       = useState(true)
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedPost, setSelected] = useState(null)
-  const [following, setFollowing]   = useState([])
-  const [followers, setFollowers]   = useState([])
+  const [following, setFollowing] = useState([])
+  const [followers, setFollowers] = useState([])
+  const [userListModal, setUserListModal] = useState(null)
 
 
   async function loadProfile() {
@@ -96,95 +98,109 @@ export default function Profile({ navigate }) {
 
   return (
     <>
-      {/* Profile header */}
-      <div style={{
-        padding: '28px 32px',
-        borderBottom: '1px solid var(--border)',
-      }}>
-        {/* Avatar + name */}
+        {/* Profile header */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          marginBottom: 20,
+          padding: '28px 32px',
+          borderBottom: '1px solid var(--border)',
         }}>
+        
           <div style={{
-            width: 52, height: 52,
-            borderRadius: '50%',
-            background: 'var(--bg3)',
-            border: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'var(--mono)',
-            fontSize: 16,
-            color: 'var(--accent)',
-            fontWeight: 500,
-            flexShrink: 0,
+            gap: 16,
+            marginBottom: 20,
           }}>
-            {initials(user.username)}
-          </div>
-          <div>
             <div style={{
-              fontFamily: 'var(--serif)',
-              fontSize: 22,
-              color: 'var(--ink)',
-              marginBottom: 2,
-            }}>
-              {user.username}
-            </div>
-            <div style={{
+              width: 52, height: 52,
+              borderRadius: '50%',
+              background: 'var(--bg3)',
+              border: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               fontFamily: 'var(--mono)',
-              fontSize: 11,
-              color: 'var(--text3)',
+              fontSize: 16,
+              color: 'var(--accent)',
+              fontWeight: 500,
+              flexShrink: 0,
             }}>
-              {user.email}
+              {initials(user.username)}
             </div>
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div style={{
-          display: 'flex',
-          gap: 0,
-          borderTop: '1px solid var(--border)',
-          paddingTop: 16,
-        }}>
-          {[
-            { label: 'Posts',     value: posts.length     },
-            { label: 'Following', value: following.length },
-            { label: 'Followers', value: followers.length },
-          ].map(({ label, value }, i) => (
-            <div
-              key={label}
-              style={{
-                flex: 1,
-                textAlign: 'center',
-                paddingRight: i < 2 ? 0 : 0,
-                borderRight: i < 2 ? '1px solid var(--border)' : 'none',
-              }}
-            >
+            <div>
               <div style={{
                 fontFamily: 'var(--serif)',
-                fontSize: 24,
+                fontSize: 22,
                 color: 'var(--ink)',
-                lineHeight: 1,
-                marginBottom: 4,
+                marginBottom: 2,
               }}>
-                {loading ? '—' : value}
+                {user.username}
               </div>
               <div style={{
                 fontFamily: 'var(--mono)',
-                fontSize: 9,
+                fontSize: 11,
                 color: 'var(--text3)',
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
               }}>
-                {label}
+                {user.email}
               </div>
             </div>
-          ))}
         </div>
+
+        {/* Stats row */}
+          <div style={{
+            display: 'flex',
+            gap: 0,
+            borderTop: '1px solid var(--border)',
+            paddingTop: 16,
+          }}>
+            {[
+              { label: 'Posts',     value: posts.length,     list: null             },
+              { label: 'Following', value: following.length, list: following        },
+              { label: 'Followers', value: followers.length, list: followers        },
+            ].map(({ label, value, list }, i) => (
+              <div
+                key={label}
+                onClick={() => {
+                  if (list && list.length > 0) {
+                    setUserListModal({ title: label, users: list })
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  borderRight: i < 2 ? '1px solid var(--border)' : 'none',
+                  cursor: list && list.length > 0 ? 'pointer' : 'default',
+                  padding: '8px 0',
+                  borderRadius: 'var(--radius)',
+                  transition: 'background 0.1s',
+                }}
+                onMouseOver={e => {
+                  if (list && list.length > 0)
+                    e.currentTarget.style.background = 'var(--bg2)'
+                }}
+                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <div style={{
+                  fontFamily: 'var(--serif)',
+                  fontSize: 24,
+                  color: 'var(--ink)',
+                  lineHeight: 1,
+                  marginBottom: 4,
+                }}>
+                  {loading ? '—' : value}
+                </div>
+                <div style={{
+                  fontFamily: 'var(--mono)',
+                  fontSize: 9,
+                  color: list && list.length > 0 ? 'var(--accent)' : 'var(--text3)',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                }}>
+                  {label}
+                  {list && list.length > 0 && ' →'}
+                </div>
+              </div>
+            ))}
+          </div>
       </div>
 
       {/* Section label */}
@@ -341,13 +357,20 @@ export default function Profile({ navigate }) {
         </div>
       )}
 
-      {/* Post detail modal */}
       {selectedPost && (
         <PostDetail
           post={selectedPost}
           onClose={() => setSelected(null)}
         />
       )}
+
+      {userListModal && (
+        <UserListModal
+          title={userListModal.title}
+          users={userListModal.users}
+          onClose={() => setUserListModal(null)}
+          />
+        )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
