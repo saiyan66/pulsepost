@@ -12,6 +12,9 @@ from app.schemas.post import (
     PostListResponseSchema, CommentCreateSchema, CommentResponseSchema,
 )
 from app.services.post import PostService
+from app.services.like import LikeService
+
+
 
 router = APIRouter(prefix="/api/posts", tags=["Posts"])
 
@@ -54,7 +57,6 @@ async def get_feed(
     """
     /feed must be defined BEFORE /{post_id} — otherwise FastAPI
     would try to match "feed" as a UUID and fail.
-    Query() adds validation and documentation to query params.
     ge=1 means >= 1, le=50 means <= 50.
     """
     feed = await PostService.get_feed(db, current_user.id, limit, cursor)
@@ -74,6 +76,13 @@ async def search_posts(
         ]
     }
 
+@router.get("/top", response_model=list[PostResponseSchema])  #top picks
+async def get_top_posts(
+    db: AsyncSession = Depends(get_db),
+):
+    posts = await LikeService.get_top_posts(db, limit=5)
+    return posts
+
 
 @router.get("", response_model=PostListResponseSchema)
 async def get_posts(
@@ -89,7 +98,7 @@ async def get_posts(
     cache_key = f"posts:list:{limit}:{cursor}"
     cached = await get_cached(cache_key)
     if cached:
-        return cached      # return cached data directly (no DB query)
+        return cached  #return cached data directly (no DB query)
 
     result = await PostService.get_posts(db, limit, cursor)
 
@@ -120,15 +129,18 @@ async def get_post(
     cache_key = f"posts:{post_id}"
     cached = await get_cached(cache_key)
     if cached:
+
+        import asyncio     #Still increment views even on cache hit
+        asyncio.create_task(
+            _increment_views_background(post_id)
+        )
         return cached
 
     post = await PostService.get_post_by_id(db, post_id)
     if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post not found",
-        )
-
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    
+    await LikeService.increment_views(db, post_id)   #increment the views
     cacheable = PostResponseSchema.model_validate(post).model_dump(mode="json")
     await set_cached(cache_key, cacheable, expire_seconds=300)
 
@@ -153,7 +165,7 @@ async def update_post(
 
     # Authorization check — is this user the author?
     # Authentication (are you logged in?) is handled by get_current_user.
-    # Authorization (are you allowed to do this?) is our responsibility.
+    # Authorization (are you allowed to do this?).
     if post.author_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -192,8 +204,44 @@ async def delete_post(
     await delete_cached(f"posts:{post_id}")
     await delete_pattern("posts:list:*")
 
+@router.post("/{post_id}/like", status_code=204)
+async def like_post(
+    post_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Like a post. Idempotent — liking twice has no effect."""
+    post = await PostService.get_post_by_id(db, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
 
-# ── Comment endpoints
+    await LikeService.like_post(db, current_user.id, post_id)
+    # Invalidate post cache so updated likes_count is served
+    await delete_cached(f"posts:{post_id}")
+
+
+@router.delete("/{post_id}/like", status_code=204)
+async def unlike_post(
+    post_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Unlike a post."""
+    await LikeService.unlike_post(db, current_user.id, post_id)
+    await delete_cached(f"posts:{post_id}")
+
+#like routes
+@router.get("/{post_id}/liked", response_model=dict)
+async def check_liked(
+    post_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Check if the current user has liked this post."""
+    liked = await LikeService.is_liked(db, current_user.id, post_id)
+    return {"liked": liked}
+
+#Comment endpoints
 
 @router.post("/{post_id}/comments", response_model=CommentResponseSchema, status_code=201)
 async def create_comment(

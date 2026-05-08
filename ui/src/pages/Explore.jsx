@@ -7,11 +7,11 @@ import UserProfileModal from '../components/UI/UserProfileModal.jsx'
 
 export default function Explore() {
   const toast = useToast()
-  const [posts, setPosts]           = useState([])
-  const [loading, setLoading]       = useState(true)
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedPost, setSelected] = useState(null)
-  const [hasMore, setHasMore]       = useState(false)
-  const [cursor, setCursor]         = useState(null)
+  const [hasMore, setHasMore] = useState(false)
+  const [cursor, setCursor] = useState(null)
   const [loadingMore, setLoadingMore] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
 

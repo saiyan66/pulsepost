@@ -73,6 +73,14 @@ export const postsApi = {
   search: (q) =>
   request('GET', `/api/posts/search?q=${encodeURIComponent(q)}`, null, false),
 
+  like:    (id) => request('POST',   `/api/posts/${id}/like`),
+  
+  unlike:  (id) => request('DELETE', `/api/posts/${id}/like`),
+  
+  isLiked: (id) => request('GET',    `/api/posts/${id}/liked`),
+  
+  topPosts: ()  => request('GET',    '/api/posts/top', null, false),
+
 };
 
 
