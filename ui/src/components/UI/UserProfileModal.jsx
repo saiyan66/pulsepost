@@ -20,12 +20,12 @@ export default function UserProfileModal({ userId, onClose }) {
   const { user: currentUser } = useAuth()
   const toast = useToast()
 
-  const [profile, setProfile]       = useState(null)
-  const [posts, setPosts]           = useState([])
-  const [followers, setFollowers]   = useState([])
-  const [following, setFollowing]   = useState([])
+  const [profile, setProfile] = useState(null)
+  const [posts, setPosts] = useState([])
+  const [followers, setFollowers] = useState([])
+  const [following, setFollowing] = useState([])
   const [isFollowing, setIsFollowing] = useState(false)
-  const [loading, setLoading]       = useState(true)
+  const [loading, setLoading] = useState(true)
   const [followLoading, setFollowLoading] = useState(false)
   const [selectedPost, setSelected] = useState(null)
 
@@ -35,7 +35,7 @@ export default function UserProfileModal({ userId, onClose }) {
     loadProfile()
   }, [userId])
 
-  // Close on Escape
+
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
@@ -88,6 +88,8 @@ export default function UserProfileModal({ userId, onClose }) {
         setFollowers(prev => [...prev, currentUser])
         toast(`Following @${profile.username}`)
       }
+        window.dispatchEvent(new CustomEvent('follow-data-changed', { detail: { userId: userId } }))
+
     } catch(err) {
       toast(err.message, 'error')
     } finally {

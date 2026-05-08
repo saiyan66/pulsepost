@@ -8,11 +8,47 @@ function initials(username) {
 }
 
 export default function RightPanel({ navigate }) {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const [counts, setCounts] = useState({ following: 0, followers: 0 })
   const [followingList, setFollowingList] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
+
+
+
+   const fetchFollowData = async () => {
+    if (!user) return
+    setLoading(true)
+    try {
+      const [following, followers] = await Promise.all([
+        usersApi.following(user.id),
+        usersApi.followers(user.id),
+      ])
+      setFollowingList(following)
+      setCounts({
+        following: following.length,
+        followers: followers.length,
+      })
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+
+  useEffect(() => {
+    fetchFollowData()
+  }, [user?.id])   
+
+  // Listen for follow/unfollow events and refresh the data
+  useEffect(() => {
+    const handleFollowChange = (event) => {
+      fetchFollowData()
+    }
+    window.addEventListener('follow-data-changed', handleFollowChange)
+    return () => window.removeEventListener('follow-data-changed', handleFollowChange)
+  }, [user])
 
   
   useEffect(() => {
@@ -336,7 +372,7 @@ export default function RightPanel({ navigate }) {
           onClose={() => setSelectedUser(null)}
         />
       )}
-      
+
   </div>
   )
 }

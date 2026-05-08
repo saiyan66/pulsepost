@@ -25,7 +25,7 @@ async def get_cached(key: str) -> Any | None:
 async def set_cached(key: str, value: Any, expire_seconds: int = 300) -> None:
     """
     Write a value to Redis.
-    serialize to JSON because Redis stores strings, not Python objects.
+    serialize to JSON because Redis stores strings.
     """
     await redis_client.set(key, json.dumps(value), ex=expire_seconds)
 
@@ -41,7 +41,7 @@ async def delete_cached(key: str) -> None:
 async def delete_pattern(pattern: str) -> None:
     """
     Example: delete_pattern("posts:list:*") clears all post list caches
-    when a new post is created — so the new post appears immediately.
+    when a new post is created.
     """
     keys = await redis_client.keys(pattern)
     if keys:

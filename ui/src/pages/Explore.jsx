@@ -5,7 +5,7 @@ import PostCard from '../components/Post/PostCard.jsx'
 import PostDetail from '../components/Post/PostDetail.jsx'
 import UserProfileModal from '../components/UI/UserProfileModal.jsx'
 
-export default function Explore({ navigate }) {
+export default function Explore() {
   const toast = useToast()
   const [posts, setPosts]           = useState([])
   const [loading, setLoading]       = useState(true)
@@ -145,6 +145,12 @@ export default function Explore({ navigate }) {
         <PostDetail
           post={selectedPost}
           onClose={() => setSelected(null)}
+          onPostUpdated={(updated) => {
+            setPosts(prev =>
+              prev.map(p => p.id === updated.id ? { ...p, ...updated } : p)
+            )
+            setSelected(prev => ({ ...prev, ...updated }))
+          }}
         />
       )}
 

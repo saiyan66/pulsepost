@@ -2,7 +2,7 @@ export default function AppLayout({ header, sidebar, children, rightPanel }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
-      {/* Fixed top bar */}
+  
       <div style={{
         position: 'sticky',
         top: 0,
@@ -15,7 +15,7 @@ export default function AppLayout({ header, sidebar, children, rightPanel }) {
         {header}
       </div>
 
-      {/* Three column body */}
+   
       <div style={{
         display: 'grid',
         gridTemplateColumns: '220px 1fr 280px',
@@ -25,7 +25,7 @@ export default function AppLayout({ header, sidebar, children, rightPanel }) {
         width: '100%',
       }}>
 
-        {/* Left sidebar */}
+    
         <div style={{
           borderRight: '1px solid var(--border)',
           position: 'sticky',
@@ -36,7 +36,7 @@ export default function AppLayout({ header, sidebar, children, rightPanel }) {
           {sidebar}
         </div>
 
-        {/* Center feed — main content area */}
+        {/* main content*/}
         <main style={{
           borderRight: '1px solid var(--border)',
           minHeight: 'calc(100vh - 56px)',

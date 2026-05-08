@@ -93,10 +93,10 @@ export const usersApi = {
     request('GET', `/api/users/${id}`, null, false),
 
   follow: (id) =>
-    request('POST', `/api/users/${id}/follow`),
+    request('POST', `/api/users/${id}/follow`, null, true),
 
   unfollow: (id) =>
-    request('DELETE', `/api/users/${id}/follow`),
+    request('DELETE', `/api/users/${id}/follow`, null, true),
 
   followers: (id) =>
     request('GET', `/api/users/${id}/followers`, null, false),

@@ -357,13 +357,20 @@ export default function Profile({ navigate }) {
         </div>
       )}
 
-      {selectedPost && (
-        <PostDetail
-          post={selectedPost}
-          onClose={() => setSelected(null)}
-        />
-      )}
-
+     
+     {selectedPost && (
+       <PostDetail
+         post={selectedPost}
+         onClose={() => setSelected(null)}
+         onPostUpdated={(updated) => {
+           setPosts(prev =>
+             prev.map(p => p.id === updated.id ? { ...p, ...updated } : p)
+           )
+           setSelected(prev => ({ ...prev, ...updated }))
+         }}
+       />
+     )}
+     
       {userListModal && (
         <UserListModal
           title={userListModal.title}

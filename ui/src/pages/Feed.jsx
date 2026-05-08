@@ -287,6 +287,12 @@ export default function Feed({ navigate }) {
         <PostDetail
           post={selectedPost}
           onClose={() => setSelected(null)}
+          onPostUpdated={(updated) => {
+            setPosts(prev =>
+              prev.map(p => p.id === updated.id ? { ...p, ...updated } : p)
+            )
+            setSelected(prev => ({ ...prev, ...updated }))
+          }}
         />
       )}
 
@@ -294,6 +300,7 @@ export default function Feed({ navigate }) {
         <UserProfileModal
           userId={selectedUser}
           onClose={() => setSelectedUser(null)}
+
         />
       )}
 

@@ -1,5 +1,6 @@
+// src/components/Post/PostDetail.jsx
 import { useState, useEffect } from 'react'
-import { commentsApi } from '../../api/client.js'
+import { commentsApi, postsApi } from '../../api/client.js'
 import { useAuth } from '../../utils/Auth.jsx'
 import { useToast } from '../UI/Toast.jsx'
 
@@ -17,19 +18,26 @@ function initials(username) {
   return (username || '?').slice(0, 2).toUpperCase()
 }
 
-export default function PostDetail({ post, onClose }) {
+export default function PostDetail({ post, onClose, onPostUpdated }) {
   const { user } = useAuth()
   const toast = useToast()
-  const [comments, setComments]   = useState([])
-  const [loadingC, setLoadingC]   = useState(true)
-  const [comment, setComment]     = useState('')
+
+  const [comments, setComments]     = useState([])
+  const [loadingC, setLoadingC]     = useState(true)
+  const [comment, setComment]       = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  const [editing, setEditing]       = useState(false)
+  const [editTitle, setEditTitle]   = useState(post.title)
+  const [editContent, setEditContent] = useState(post.content)
+  const [saving, setSaving]         = useState(false)
+
+  const isAuthor = user && user.id === post.author_id
 
   useEffect(() => {
     loadComments()
   }, [post.id])
 
- 
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
@@ -64,8 +72,34 @@ export default function PostDetail({ post, onClose }) {
     }
   }
 
+  async function saveEdit() {
+    if (!editTitle.trim() || !editContent.trim()) {
+      toast('Title and content cannot be empty', 'error')
+      return
+    }
+    setSaving(true)
+    try {
+      const updated = await postsApi.update(post.id, {
+        title: editTitle.trim(),
+        content: editContent.trim(),
+      })
+      toast('Post updated')
+      setEditing(false)
+      if (onPostUpdated) onPostUpdated(updated)
+    } catch(e) {
+      toast(e.message, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function cancelEdit() {
+    setEditTitle(post.title)
+    setEditContent(post.content)
+    setEditing(false)
+  }
+
   return (
-    // Overlay
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       style={{
@@ -89,6 +123,7 @@ export default function PostDetail({ post, onClose }) {
         animation: 'fadeUp 0.2s ease both',
       }}>
 
+        {/* Modal header */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -129,164 +164,303 @@ export default function PostDetail({ post, onClose }) {
               {timeAgo(post.created_at)}
             </span>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text3)',
-              cursor: 'pointer',
-              fontSize: 18,
-              lineHeight: 1,
-              padding: '0 4px',
-              fontFamily: 'var(--mono)',
-            }}
-          >
-            ✕
-          </button>
-        </div>
 
-     
-        <div style={{ padding: '32px 28px' }}>
-          <h1 style={{
-            fontFamily: 'var(--serif)',
-            fontSize: 28,
-            fontWeight: 400,
-            color: 'var(--ink)',
-            lineHeight: 1.25,
-            marginBottom: 20,
-            letterSpacing: '-0.02em',
-          }}>
-            {post.title}
-          </h1>
-          <div style={{
-            fontSize: 15,
-            color: 'var(--text)',
-            lineHeight: 1.85,
-            fontFamily: 'var(--body)',
-            whiteSpace: 'pre-wrap',
-          }}>
-            {post.content}
-          </div>
-        </div>
+  
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {isAuthor && !editing && (
+              <button
+                onClick={() => setEditing(true)}
+                style={{
+                  padding: '4px 12px',
+                  background: 'transparent',
+                  color: 'var(--text3)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius)',
+                  fontFamily: 'var(--mono)',
+                  fontSize: 10,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  transition: 'all 0.1s',
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.color = 'var(--ink)'
+                  e.currentTarget.style.borderColor = 'var(--border2)'
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.color = 'var(--text3)'
+                  e.currentTarget.style.borderColor = 'var(--border)'
+                }}
+              >
+                ✎ Edit
+              </button>
+            )}
 
-    
-        <div style={{
-          borderTop: '2px solid var(--border)',
-          padding: '24px 28px',
-          background: 'var(--bg)',
-        }}>
-          <div style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 10,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'var(--text3)',
-            marginBottom: 20,
-          }}>
-            {loadingC ? 'Loading comments...' : `${comments.length} Comment${comments.length !== 1 ? 's' : ''}`}
-          </div>
+            {isAuthor && editing && (
+              <>
+                <button
+                  onClick={cancelEdit}
+                  style={{
+                    padding: '4px 12px',
+                    background: 'transparent',
+                    color: 'var(--text3)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius)',
+                    fontFamily: 'var(--mono)',
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEdit}
+                  disabled={saving}
+                  style={{
+                    padding: '4px 12px',
+                    background: saving ? 'var(--bg3)' : 'var(--text)',
+                    color: saving ? 'var(--text3)' : 'var(--paper)',
+                    border: 'none',
+                    borderRadius: 'var(--radius)',
+                    fontFamily: 'var(--mono)',
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    cursor: saving ? 'default' : 'pointer',
+                    transition: 'all 0.1s',
+                  }}
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+              </>
+            )}
 
-       
-          {!loadingC && comments.map(c => (
-            <div
-              key={c.id}
+            <button
+              onClick={onClose}
               style={{
-                paddingBottom: 16,
-                marginBottom: 16,
-                borderBottom: '1px solid var(--border)',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text3)',
+                cursor: 'pointer',
+                fontSize: 16,
+                fontFamily: 'var(--mono)',
+                padding: '0 4px',
               }}
             >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Post content — read or edit mode */}
+        <div style={{ padding: '32px 28px' }}>
+
+          {editing ? (
+        
+            <>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={e => setEditTitle(e.target.value)}
+                maxLength={300}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '1px solid var(--border2)',
+                  borderRadius: 0,
+                  padding: '4px 0 8px',
+                  fontFamily: 'var(--serif)',
+                  fontSize: 26,
+                  fontWeight: 400,
+                  color: 'var(--ink)',
+                  outline: 'none',
+                  marginBottom: 24,
+                }}
+              />
+              <textarea
+                value={editContent}
+                onChange={e => setEditContent(e.target.value)}
+                rows={12}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: 0,
+                  padding: 0,
+                  fontFamily: 'var(--body)',
+                  fontSize: 15,
+                  color: 'var(--text)',
+                  lineHeight: 1.85,
+                  outline: 'none',
+                  resize: 'vertical',
+                }}
+              />
               <div style={{
                 fontFamily: 'var(--mono)',
-                fontSize: 11,
-                color: 'var(--accent)',
-                marginBottom: 5,
-                letterSpacing: '0.02em',
+                fontSize: 10,
+                color: 'var(--text3)',
+                marginTop: 8,
+                textAlign: 'right',
               }}>
-                @{c.author?.username}
-                <span style={{ color: 'var(--text3)', marginLeft: 8 }}>
-                  {timeAgo(c.created_at)}
-                </span>
+                {editContent.trim().split(/\s+/).filter(Boolean).length} words
               </div>
+            </>
+          ) : (
+       
+            <>
+              <h1 style={{
+                fontFamily: 'var(--serif)',
+                fontSize: 28,
+                fontWeight: 400,
+                color: 'var(--ink)',
+                lineHeight: 1.25,
+                marginBottom: 20,
+                letterSpacing: '-0.02em',
+              }}>
+                {post.title}
+              </h1>
               <div style={{
-                fontSize: 14,
-                color: 'var(--text2)',
-                lineHeight: 1.7,
+                fontSize: 15,
+                color: 'var(--text)',
+                lineHeight: 1.85,
+                fontFamily: 'var(--body)',
+                whiteSpace: 'pre-wrap',
               }}>
-                {c.content}
+                {post.content}
               </div>
-            </div>
-          ))}
+            </>
+          )}
+        </div>
 
-          {!loadingC && comments.length === 0 && (
+        {/* Comments (only in read mode)*/}
+        {!editing && (
+          <div style={{
+            borderTop: '2px solid var(--border)',
+            padding: '24px 28px',
+            background: 'var(--bg)',
+          }}>
             <div style={{
               fontFamily: 'var(--mono)',
-              fontSize: 12,
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
               color: 'var(--text3)',
               marginBottom: 20,
             }}>
-              No comments yet. Be the first.
+              {loadingC
+                ? 'Loading comments...'
+                : `${comments.length} Comment${comments.length !== 1 ? 's' : ''}`
+              }
             </div>
-          )}
 
-       
-          {user ? (
-            <form onSubmit={submitComment} style={{ marginTop: 8 }}>
-              <textarea
-                value={comment}
-                onChange={e => setComment(e.target.value)}
-                placeholder="Leave a comment..."
-                rows={3}
+            {!loadingC && comments.map(c => (
+              <div
+                key={c.id}
                 style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  background: 'var(--paper)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)',
-                  color: 'var(--text)',
-                  fontFamily: 'var(--body)',
-                  fontSize: 14,
-                  lineHeight: 1.6,
-                  resize: 'vertical',
-                  outline: 'none',
-                  marginBottom: 10,
-                }}
-                onFocus={e => e.target.style.borderColor = 'var(--border2)'}
-                onBlur={e => e.target.style.borderColor = 'var(--border)'}
-              />
-              <button
-                type="submit"
-                disabled={submitting || !comment.trim()}
-                style={{
-                  padding: '7px 20px',
-                  background: comment.trim() ? 'var(--text)' : 'var(--bg3)',
-                  color: comment.trim() ? 'var(--paper)' : 'var(--text3)',
-                  border: 'none',
-                  borderRadius: 'var(--radius)',
-                  fontFamily: 'var(--mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  cursor: comment.trim() ? 'pointer' : 'default',
-                  transition: 'all 0.1s',
+                  paddingBottom: 16,
+                  marginBottom: 16,
+                  borderBottom: '1px solid var(--border)',
                 }}
               >
-                {submitting ? 'Posting...' : 'Post Comment'}
-              </button>
-            </form>
-          ) : (
-            <div style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 12,
-              color: 'var(--text3)',
-              paddingTop: 8,
-            }}>
-              Sign in to leave a comment.
-            </div>
-          )}
-        </div>
+                <div style={{
+                  fontFamily: 'var(--mono)',
+                  fontSize: 11,
+                  color: 'var(--accent)',
+                  marginBottom: 5,
+                }}>
+                  @{c.author?.username}
+                  <span style={{ color: 'var(--text3)', marginLeft: 8 }}>
+                    {timeAgo(c.created_at)}
+                  </span>
+                </div>
+                <div style={{
+                  fontSize: 14,
+                  color: 'var(--text2)',
+                  lineHeight: 1.7,
+                }}>
+                  {c.content}
+                </div>
+              </div>
+            ))}
+
+            {!loadingC && comments.length === 0 && (
+              <div style={{
+                fontFamily: 'var(--mono)',
+                fontSize: 12,
+                color: 'var(--text3)',
+                marginBottom: 20,
+              }}>
+                No comments yet. Be the first.
+              </div>
+            )}
+
+            {user ? (
+              <form onSubmit={submitComment} style={{ marginTop: 8 }}>
+                <textarea
+                  value={comment}
+                  onChange={e => setComment(e.target.value)}
+                  placeholder="Leave a comment..."
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: 'var(--paper)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius)',
+                    color: 'var(--text)',
+                    fontFamily: 'var(--body)',
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    resize: 'vertical',
+                    outline: 'none',
+                    marginBottom: 10,
+                  }}
+                  onFocus={e => e.target.style.borderColor = 'var(--border2)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                />
+                <button
+                  type="submit"
+                  disabled={submitting || !comment.trim()}
+                  style={{
+                    padding: '7px 20px',
+                    background: comment.trim() ? 'var(--text)' : 'var(--bg3)',
+                    color: comment.trim() ? 'var(--paper)' : 'var(--text3)',
+                    border: 'none',
+                    borderRadius: 'var(--radius)',
+                    fontFamily: 'var(--mono)',
+                    fontSize: 11,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    cursor: comment.trim() ? 'pointer' : 'default',
+                    transition: 'all 0.1s',
+                  }}
+                >
+                  {submitting ? 'Posting...' : 'Post Comment'}
+                </button>
+              </form>
+            ) : (
+              <div style={{
+                fontFamily: 'var(--mono)',
+                fontSize: 12,
+                color: 'var(--text3)',
+                paddingTop: 8,
+              }}>
+                Sign in to leave a comment.
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   )
 }
