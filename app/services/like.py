@@ -101,15 +101,4 @@ class LikeService:
         )
         return result.scalars().all()
 
-    @staticmethod
-    async def increment_views(
-        db: AsyncSession,
-        post_id: uuid.UUID,
-    ) -> None:
-        """
-        Increment view count. Called every time a post is opened.
-        """
-        post = await db.get(Post, post_id)
-        if post:
-            post.views_count += 1
-            await db.flush()
+ 

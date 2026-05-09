@@ -1,7 +1,4 @@
 import likeOutlined from '../../images/like-outlined.svg'
-import eyeIcon from '../../images/eye.svg'
-
-
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000
@@ -19,6 +16,8 @@ function initials(username) {
 
 export default function PostCard({ post, onClick, onDelete, onAuthorClick, index = 0 }) {
   const isOwner = onDelete !== undefined
+
+
 
   return (
     <article
@@ -57,7 +56,7 @@ export default function PostCard({ post, onClick, onDelete, onAuthorClick, index
         </div>
         <span
           onClick={e => {
-            e.stopPropagation()   // don't open the post
+            e.stopPropagation()  
             if (onAuthorClick) onAuthorClick(post.author?.id)
           }}
           style={{
@@ -172,19 +171,6 @@ export default function PostCard({ post, onClick, onDelete, onAuthorClick, index
           }}>
             <img src={likeOutlined} alt="likes" style={{ width: 12, height: 12, display: 'block' }} />
             <span>{post.likes_count || 0}</span>
-          </div>
-        
-  
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-            fontFamily: 'var(--mono)',
-            fontSize: 11,
-            color: 'var(--text3)',
-          }}>
-            <img src={eyeIcon} alt="views" style={{ width: 12, height: 12, display: 'block' }} />
-            <span>{post.views_count || 0}</span>
           </div>
       </div>
     </div>

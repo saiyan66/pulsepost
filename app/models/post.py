@@ -20,7 +20,6 @@ class Post(TimestampMixin, Base):
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     likes_count: Mapped[int] = mapped_column(Integer, default=0)
-    views_count: Mapped[int] = mapped_column(Integer, default=0)  
 
     author: Mapped["User"] = relationship("User", back_populates="posts")
     comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="post", cascade="all, delete-orphan")

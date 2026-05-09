@@ -122,28 +122,20 @@ async def get_post(
     post_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-      1. Check cache → if hit, return cached value
-      2. If miss → query DB, store in cache, return result
-    """
     cache_key = f"posts:{post_id}"
     cached = await get_cached(cache_key)
     if cached:
-
-        import asyncio     #Still increment views even on cache hit
-        asyncio.create_task(
-            _increment_views_background(post_id)
-        )
         return cached
 
     post = await PostService.get_post_by_id(db, post_id)
     if not post:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-    
-    await LikeService.increment_views(db, post_id)   #increment the views
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found",
+        )
+
     cacheable = PostResponseSchema.model_validate(post).model_dump(mode="json")
     await set_cached(cache_key, cacheable, expire_seconds=300)
-
     return post
 
 
@@ -215,9 +207,18 @@ async def like_post(
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
-    await LikeService.like_post(db, current_user.id, post_id)
+    liked = await LikeService.like_post(db, current_user.id, post_id)
     # Invalidate post cache so updated likes_count is served
     await delete_cached(f"posts:{post_id}")
+
+        # Notify post author 
+    if liked and str(post.author_id) != str(current_user.id):
+        await manager.send_to(str(post.author_id), {
+            "type": "new_like",
+            "post_id": str(post_id),
+            "post_title": post.title,
+            "liker": current_user.username,
+        })
 
 
 @router.delete("/{post_id}/like", status_code=204)

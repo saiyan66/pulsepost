@@ -194,6 +194,7 @@ export default function Header({
                           {n.type === 'new_post'     && '◈'}
                           {n.type === 'new_follower' && '◇'}
                           {n.type === 'new_comment'  && '○'}
+                          {n.type === 'new_like'     && '♥'}
                         </span>
                         {n.text}
                       </div>

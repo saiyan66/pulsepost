@@ -82,6 +82,7 @@ export default function App() {
           })
         }
         break
+
       case 'new_follower':
         addNotification({
           id: Date.now(),
@@ -89,6 +90,7 @@ export default function App() {
           text: `${msg.follower} started following you`,
         })
         break
+
       case 'new_comment':
         addNotification({
           id: Date.now(),
@@ -97,6 +99,16 @@ export default function App() {
           postId: msg.post_id,
         })
         break
+
+      case 'new_like':
+      addNotification({
+        id: Date.now(),
+        type: 'new_like',
+        text: `${msg.liker} liked "${msg.post_title}"`,
+        postId: msg.post_id,
+      })
+      break
+      
     }
   }, [user?.id])
 

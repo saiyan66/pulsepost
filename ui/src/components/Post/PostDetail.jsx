@@ -4,7 +4,6 @@ import { useAuth } from '../../utils/Auth.jsx'
 import { useToast } from '../UI/Toast.jsx'
 import likeOutlined from '../../images/like-outlined.svg'
 import likeFilled from '../../images/like-filled.svg'
-import eyeIcon from '../../images/eye.svg'
 
 
 function timeAgo(dateStr) {
@@ -72,25 +71,30 @@ export default function PostDetail({ post, onClose, onPostUpdated }) {
     }
   }
 
-  async function toggleLike() {
+
+async function toggleLike() {
   if (!user) { toast('Sign in to like posts', 'error'); return }
   setLiking(true)
   try {
     if (liked) {
-        await postsApi.unlike(post.id)
-        setLiked(false)
-        setLikesCount(prev => Math.max(0, prev - 1))
-      } else {
-        await postsApi.like(post.id)
-        setLiked(true)
-        setLikesCount(prev => prev + 1)
-      }
-    } catch(e) {
-      toast(e.message, 'error')
-   } finally {
-      setLiking(false)
+      await postsApi.unlike(post.id)
+      const newCount = Math.max(0, likesCount - 1)
+      setLiked(false)
+      setLikesCount(newCount)
+      if (onPostUpdated) onPostUpdated({ ...post, likes_count: newCount })
+    } else {
+      await postsApi.like(post.id)
+      const newCount = likesCount + 1
+      setLiked(true)
+      setLikesCount(newCount)
+      if (onPostUpdated) onPostUpdated({ ...post, likes_count: newCount })
     }
+  } catch(e) {
+    toast(e.message, 'error')
+  } finally {
+    setLiking(false)
   }
+}
 
 
   async function submitComment(e) {
@@ -414,19 +418,7 @@ export default function PostDetail({ post, onClose, onPostUpdated }) {
                     <img src={likeOutlined} alt="like" style={{ width: 14, height: 14, display: 'block' }} />
                   )}
                 </button>
-                
-                <span style={{
-                  fontFamily: 'var(--mono)',
-                  fontSize: 11,
-                  color: 'var(--text3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                }}>
-                  <img src={eyeIcon} alt="views" style={{ width: 14, height: 14, display: 'block' }} />
-                  {post.views_count || 0} views
-                </span>
-              </div>
+                  </div>
             </>
           )}
         </div>

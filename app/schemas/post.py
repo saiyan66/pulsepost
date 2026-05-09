@@ -65,8 +65,7 @@ class PostResponseSchema(BaseModel):
     id: uuid.UUID
     title: str
     content: str
-    likes_count: int
-    views_count: int  
+    likes_count: int 
     author_id: uuid.UUID
     author: PostAuthorSchema     
     created_at: datetime
