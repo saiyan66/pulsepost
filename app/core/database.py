@@ -4,7 +4,7 @@ from app.core.config import settings
 
 
 engine = create_async_engine(
-    settings.async_DATABASE_URL,
+    settings.async_database_url,
     echo=settings.DEBUG,  # echo=True logs every SQL statement 
     pool_size=10,         
     max_overflow=20,        
