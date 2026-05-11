@@ -100,6 +100,9 @@ export const usersApi = {
   get: (id) =>
     request('GET', `/api/users/${id}`, null, false),
 
+  deleteMe: () =>
+    request('DELETE', '/api/users/me', null, true),
+
   follow: (id) =>
     request('POST', `/api/users/${id}/follow`, null, true),
 

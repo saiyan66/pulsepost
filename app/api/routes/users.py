@@ -12,7 +12,6 @@ from app.services.user import UserService
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
 
-
 @router.get("/search", response_model=list[UserResponseSchema])
 async def search_users(
     q: str = Query(min_length=1),
@@ -20,6 +19,18 @@ async def search_users(
 ):
     users = await FollowService.search_users(db, q)
     return users
+
+
+@router.delete("/me", status_code=204)
+async def delete_me(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Delete the authenticated user's profile.
+    Cascades to related rows via DB constraints (posts, follows, etc).
+    """
+    await UserService.delete_user(db, current_user)
 
 
 @router.get("/{user_id}", response_model=UserResponseSchema)

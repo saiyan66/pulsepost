@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../utils/Auth.jsx'
 import bellIcon from '../../images/bell.svg';
 
@@ -11,190 +11,80 @@ export default function Header({
 }) {
   const { user, logout } = useAuth()
   const [showNotifs, setShowNotifs] = useState(false)
+  const notifWrapperRef = useRef(null)
 
-  // Close dropdown when clicking anywhere outside
   useEffect(() => {
     if (!showNotifs) return
-    const handler = () => setShowNotifs(false)
-    document.addEventListener('click', handler)
-    return () => document.removeEventListener('click', handler)
+    const handler = (event) => {
+      if (!notifWrapperRef.current?.contains(event.target)) {
+        setShowNotifs(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
   }, [showNotifs])
 
   return (
-    <header style={{
-      height: 56,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '0 32px',
-      background: 'var(--paper)',
-    }}>
-
- 
+    <header className="pulse-header">
+      {/* Logo */}
       <div
         onClick={() => navigate('feed')}
-        style={{
-          fontFamily: 'var(--serif)',
-          fontSize: 24,
-          fontWeight: 600,
-          color: 'var(--ink)',
-          cursor: 'pointer',
-          letterSpacing: '-0.02em',
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: 8,
-          userSelect: 'none',
-        }}
+        className="logo"
       >
         PulsePost
       </div>
 
-  
-      <nav style={{
-        display: 'flex',
-        borderLeft: '1px solid var(--border)',
-        borderRight: '1px solid var(--border)',
-      }}>
+    
+      <nav className="main-nav">
         {[
-          { label: 'Feed', page: 'feed'    },
+          { label: 'Feed', page: 'feed' },
           { label: 'Explore', page: 'explore' },
-          { label: 'Search', page: 'search'  },
+          { label: 'Search', page: 'search' },
         ].map(({ label, page }) => (
           <button
             key={page}
             onClick={() => navigate(page)}
-            style={{
-              padding: '0 24px',
-              height: 36,
-              background: currentPage === page ? 'var(--text)' : 'transparent',
-              color: currentPage === page ? 'var(--paper)' : 'var(--text2)',
-              border: 'none',
-              borderRight: '1px solid var(--border)',
-              fontFamily: 'var(--mono)',
-              fontSize: 11,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              transition: 'all 0.1s',
-            }}
+            className={`nav-btn ${currentPage === page ? 'active' : ''}`}
           >
             {label}
           </button>
         ))}
       </nav>
 
-  
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-
+      {/* Right side: user actions */}
+      <div className="user-area">
         {user && (
           <>
-            <div
-              style={{ position: 'relative' }}
-              onClick={e => e.stopPropagation()}
-            >
+            {/* Notifications */}
+            <div className="notification-wrapper" ref={notifWrapperRef}>
               <button
+                className="icon-btn bell-btn"
                 onClick={() => {
                   setShowNotifs(prev => !prev)
                   if (!showNotifs) onNotificationsOpen?.()
                 }}
                 title="Notifications"
-                style={{
-                  width: 34, height: 34,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'transparent',
-                  border: '1px solid var(--border)',
-                  borderRadius: '50%',
-                  color: 'var(--text2)',
-                  cursor: 'pointer',
-                  fontSize: 14,
-                  position: 'relative',
-                  flexShrink: 0,
-                  transition: 'all 0.1s',
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.background = 'var(--bg3)'
-                  e.currentTarget.style.borderColor = 'var(--border2)'
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.borderColor = 'var(--border)'
-                }}
               >
-                <img src={bellIcon} alt="notifications" style={{ width: 15, height: 15 }} />
+                <img src={bellIcon} alt="notifications" />
                 {unreadCount > 0 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: -3, right: -3,
-                    minWidth: 16, height: 16,
-                    padding: '0 3px',
-                    background: 'var(--accent)',
-                    color: 'var(--paper)',
-                    borderRadius: 8,
-                    fontFamily: 'var(--mono)',
-                    fontSize: 9,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 600,
-                  }}>
+                  <span className="notif-badge">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </button>
-
-              {/* Dropdown */}
               {showNotifs && (
-                <div style={{
-                  position: 'absolute',
-                  top: 42,
-                  right: 0,
-                  width: 300,
-                  background: 'var(--paper)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                  zIndex: 300,
-                  overflow: 'hidden',
-                }}>
-                  <div style={{
-                    padding: '10px 14px',
-                    borderBottom: '1px solid var(--border)',
-                    fontFamily: 'var(--mono)',
-                    fontSize: 10,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'var(--text3)',
-                  }}>
-                    Notifications
-                  </div>
-
+                <div className="notif-dropdown">
+                  <div className="notif-header">Notifications</div>
                   {notifications.length === 0 ? (
-                    <div style={{
-                      padding: '20px 14px',
-                      fontFamily: 'var(--mono)',
-                      fontSize: 11,
-                      color: 'var(--text3)',
-                    }}>
-                      No notifications yet.
-                    </div>
+                    <div className="notif-empty">No notifications yet.</div>
                   ) : (
                     notifications.slice(0, 8).map(n => (
-                      <div
-                        key={n.id}
-                        style={{
-                          padding: '10px 14px',
-                          borderBottom: '1px solid var(--border)',
-                          fontFamily: 'var(--mono)',
-                          fontSize: 11,
-                          color: 'var(--text2)',
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        <span style={{ color: 'var(--accent)', marginRight: 6 }}>
-                          {n.type === 'new_post'     && '◈'}
+                      <div key={n.id} className="notif-item">
+                        <span className="notif-icon">
+                          {n.type === 'new_post' && '◈'}
                           {n.type === 'new_follower' && '◇'}
-                          {n.type === 'new_comment'  && '○'}
-                          {n.type === 'new_like'     && '♥'}
+                          {n.type === 'new_comment' && '○'}
+                          {n.type === 'new_like' && '♥'}
                         </span>
                         {n.text}
                       </div>
@@ -204,94 +94,304 @@ export default function Header({
               )}
             </div>
 
+         
             <button
               onClick={() => navigate('write')}
+              className="icon-btn write-btn"
               title="Write a new post"
-              style={{
-                width: 34, height: 34,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'transparent',
-                border: '1px solid var(--border)',
-                borderRadius: '50%',
-                color: 'var(--text2)',
-                cursor: 'pointer',
-                fontSize: 15,
-                flexShrink: 0,
-                transition: 'all 0.1s',
-              }}
-              onMouseOver={e => {
-                e.currentTarget.style.background = 'var(--text)'
-                e.currentTarget.style.color = 'var(--paper)'
-                e.currentTarget.style.borderColor = 'var(--text)'
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = 'var(--text2)'
-                e.currentTarget.style.borderColor = 'var(--border)'
-              }}
             >
               ✎
             </button>
 
-      
+           
             <span
               onClick={() => navigate('profile')}
-              style={{
-                fontFamily: 'var(--mono)',
-                fontSize: 12,
-                color: 'var(--text3)',
-                cursor: 'pointer',
-                letterSpacing: '0.04em',
-                userSelect: 'none',
-              }}
+              className="username"
             >
               @{user.username}
             </span>
 
-     
-            <button
-              onClick={logout}
-              style={{
-                padding: '4px 8px',
-                background: 'transparent',
-                color: 'var(--text3)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)',
-                fontFamily: 'var(--mono)',
-                fontSize: 10,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                transition: 'all 0.1s',
-              }}
-              onMouseOver={e => e.currentTarget.style.borderColor = 'var(--border2)'}
-              onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border)'}
-            >
+         
+            <button onClick={logout} className="signout-btn">
               sign out
             </button>
           </>
         )}
 
         {!user && (
-          <button
-            onClick={() => navigate('auth')}
-            style={{
-              padding: '6px 18px',
-              background: 'var(--text)',
-              color: 'var(--paper)',
-              border: 'none',
-              borderRadius: 'var(--radius)',
-              fontFamily: 'var(--mono)',
-              fontSize: 11,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-            }}
-          >
+          <button onClick={() => navigate('auth')} className="signin-btn">
             Sign in
           </button>
         )}
       </div>
+
+      <style>{`
+        /* Base header styles (desktop first) */
+        .pulse-header {
+          height: 56px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 32px;
+          background: var(--paper);
+          border-bottom: 1px solid var(--border);
+          gap: 24px;
+          flex-wrap: wrap;
+        }
+
+        .logo {
+          font-family: var(--serif);
+          font-size: 24px;
+          font-weight: 600;
+          color: var(--ink);
+          cursor: pointer;
+          letter-spacing: -0.02em;
+          user-select: none;
+          white-space: nowrap;
+        }
+
+        .main-nav {
+          display: flex;
+          border-left: 1px solid var(--border);
+          border-right: 1px solid var(--border);
+          flex: 0 0 auto;
+        }
+
+        .nav-btn {
+          padding: 0 24px;
+          height: 36px;
+          background: transparent;
+          color: var(--text2);
+          border: none;
+          border-right: 1px solid var(--border);
+          font-family: var(--mono);
+          font-size: 11px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: all 0.1s;
+          white-space: nowrap;
+        }
+
+        .nav-btn.active {
+          background: var(--text);
+          color: var(--paper);
+        }
+
+        .nav-btn:last-child {
+          border-right: none;
+        }
+
+        .user-area {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        /* Icon buttons */
+        .icon-btn {
+          width: 34px;
+          height: 34px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          border: 1px solid var(--border);
+          border-radius: 50%;
+          color: var(--text2);
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: all 0.1s;
+        }
+
+        .icon-btn:hover {
+          background: var(--bg3);
+          border-color: var(--border2);
+        }
+
+        .bell-btn {
+          position: relative;
+        }
+
+        .bell-btn img {
+          width: 15px;
+          height: 15px;
+        }
+
+        .notif-badge {
+          position: absolute;
+          top: -3px;
+          right: -3px;
+          min-width: 16px;
+          height: 16px;
+          padding: 0 3px;
+          background: var(--accent);
+          color: var(--paper);
+          border-radius: 8px;
+          font-family: var(--mono);
+          font-size: 9px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+        }
+
+        .username {
+          font-family: var(--mono);
+          font-size: 12px;
+          color: var(--text3);
+          cursor: pointer;
+          letter-spacing: 0.04em;
+          user-select: none;
+          white-space: nowrap;
+        }
+
+        .username:hover {
+          color: var(--accent);
+        }
+
+        .signout-btn {
+          padding: 4px 8px;
+          background: transparent;
+          color: var(--text3);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          font-family: var(--mono);
+          font-size: 10px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: all 0.1s;
+        }
+
+        .signout-btn:hover {
+          border-color: var(--border2);
+        }
+
+        .signin-btn {
+          padding: 6px 18px;
+          background: var(--text);
+          color: var(--paper);
+          border: none;
+          border-radius: var(--radius);
+          font-family: var(--mono);
+          font-size: 11px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          cursor: pointer;
+        }
+
+        /* Notifications dropdown */
+        .notification-wrapper {
+          position: relative;
+        }
+
+        .notif-dropdown {
+          position: absolute;
+          top: 42px;
+          right: 0;
+          width: 280px;
+          background: var(--paper);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+          z-index: 300;
+          overflow: hidden;
+        }
+
+        .notif-header {
+          padding: 10px 14px;
+          border-bottom: 1px solid var(--border);
+          font-family: var(--mono);
+          font-size: 10px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--text3);
+        }
+
+        .notif-empty {
+          padding: 20px 14px;
+          font-family: var(--mono);
+          font-size: 11px;
+          color: var(--text3);
+        }
+
+        .notif-item {
+          padding: 10px 14px;
+          border-bottom: 1px solid var(--border);
+          font-family: var(--mono);
+          font-size: 11px;
+          color: var(--text2);
+          line-height: 1.5;
+        }
+
+        .notif-icon {
+          color: var(--accent);
+          margin-right: 6px;
+        }
+
+        /* Responsive: tablet and mobile */
+        @media (max-width: 900px) {
+          .pulse-header {
+            padding: 0 20px;
+            gap: 16px;
+          }
+          .nav-btn {
+            padding: 0 16px;
+            font-size: 10px;
+          }
+        }
+
+        @media (max-width: 680px) {
+          .pulse-header {
+            flex-direction: column;
+            height: auto;
+            padding: 12px 16px;
+            gap: 12px;
+            align-items: stretch;
+          }
+          .logo {
+            text-align: center;
+          }
+          .main-nav {
+            justify-content: center;
+            flex: 1;
+          }
+          .nav-btn {
+            flex: 1;
+            text-align: center;
+            padding: 0 8px;
+            font-size: 10px;
+          }
+          .user-area {
+            justify-content: center;
+            gap: 8px;
+          }
+          .username {
+            display: none; 
+          }
+          .icon-btn {
+            width: 32px;
+            height: 32px;
+          }
+          .bell-btn img {
+            width: 14px;
+            height: 14px;
+          }
+          .signout-btn {
+            font-size: 9px;
+            padding: 3px 6px;
+          }
+
+          .notif-dropdown {
+            right: 50%;
+            transform: translateX(50%);
+            width: min(320px, calc(100vw - 32px));
+          }
+        }
+      `}</style>
     </header>
   )
 }

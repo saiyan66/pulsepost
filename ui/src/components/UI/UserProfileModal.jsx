@@ -3,6 +3,7 @@ import { usersApi, postsApi } from '../../api/client.js'
 import { useAuth } from '../../utils/Auth.jsx'
 import { useToast } from './Toast.jsx'
 import PostDetail from '../Post/PostDetail.jsx'
+import ConfirmDialog from './ConfirmDialog.jsx'
 
 function initials(username) {
   return (username || '?').slice(0, 2).toUpperCase()
@@ -17,7 +18,7 @@ function timeAgo(dateStr) {
 }
 
 export default function UserProfileModal({ userId, onClose }) {
-  const { user: currentUser } = useAuth()
+  const { user: currentUser, logout } = useAuth()
   const toast = useToast()
 
   const [profile, setProfile] = useState(null)
@@ -27,6 +28,8 @@ export default function UserProfileModal({ userId, onClose }) {
   const [isFollowing, setIsFollowing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [followLoading, setFollowLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [selectedPost, setSelected] = useState(null)
 
   const isMe = currentUser && currentUser.id === userId
@@ -97,9 +100,30 @@ export default function UserProfileModal({ userId, onClose }) {
     }
   }
 
+  async function deleteProfile() {
+    if (!isMe) return
+    if (deleteLoading) return
+
+    setDeleteLoading(true)
+    try {
+      await usersApi.deleteMe()
+      toast('Profile removed.')
+      logout()
+      onClose()
+      // Ensure the app re-renders into guest mode everywhere.
+      window.location.reload()
+    } catch (err) {
+      toast(err.message, 'error')
+    } finally {
+      setDeleteLoading(false)
+      setConfirmDeleteOpen(false)
+    }
+  }
+
   return (
     <div
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
+      className="pp-profile-modal-overlay"
       style={{
         position: 'fixed',
         inset: 0,
@@ -112,23 +136,41 @@ export default function UserProfileModal({ userId, onClose }) {
         overflowY: 'auto',
       }}
     >
-      <div style={{
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Delete profile"
+        message="Delete your profile and all associated content?"
+        confirmText="Yes, delete"
+        cancelText="No"
+        danger
+        loading={deleteLoading}
+        onCancel={() => { if (!deleteLoading) setConfirmDeleteOpen(false) }}
+        onConfirm={deleteProfile}
+      />
+
+      <div
+        className="pp-profile-modal"
+        style={{
         background: 'var(--paper)',
         border: '1px solid var(--border)',
         borderRadius: 2,
         width: '100%',
         maxWidth: 580,
         animation: 'fadeUp 0.2s ease both',
-      }}>
+      }}
+      >
 
         {/* Modal header */}
-        <div style={{
+        <div
+          className="pp-profile-modal-header"
+          style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '16px 24px',
           borderBottom: '1px solid var(--border)',
-        }}>
+        }}
+        >
           <span style={{
             fontFamily: 'var(--mono)',
             fontSize: 10,
@@ -229,47 +271,81 @@ export default function UserProfileModal({ userId, onClose }) {
                 </div>
 
               
-                {!isMe && currentUser && (
-                  <button
-                    onClick={toggleFollow}
-                    disabled={followLoading}
-                    style={{
-                      padding: '8px 20px',
-                      background: isFollowing ? 'transparent' : 'var(--text)',
-                      color: isFollowing ? 'var(--text2)' : 'var(--paper)',
-                      border: isFollowing
-                        ? '1px solid var(--border)'
-                        : '1px solid var(--text)',
-                      borderRadius: 'var(--radius)',
-                      fontFamily: 'var(--mono)',
-                      fontSize: 11,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      cursor: followLoading ? 'default' : 'pointer',
-                      transition: 'all 0.1s',
-                      flexShrink: 0,
-                    }}
-                    onMouseOver={e => {
-                      if (!followLoading && isFollowing) {
-                        e.currentTarget.style.borderColor = 'var(--danger)'
-                        e.currentTarget.style.color = 'var(--danger)'
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  {!isMe && currentUser && (
+                    <button
+                      onClick={toggleFollow}
+                      disabled={followLoading}
+                      style={{
+                        padding: '8px 20px',
+                        background: isFollowing ? 'transparent' : 'var(--text)',
+                        color: isFollowing ? 'var(--text2)' : 'var(--paper)',
+                        border: isFollowing
+                          ? '1px solid var(--border)'
+                          : '1px solid var(--text)',
+                        borderRadius: 'var(--radius)',
+                        fontFamily: 'var(--mono)',
+                        fontSize: 11,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        cursor: followLoading ? 'default' : 'pointer',
+                        transition: 'all 0.1s',
+                        flexShrink: 0,
+                      }}
+                      onMouseOver={e => {
+                        if (!followLoading && isFollowing) {
+                          e.currentTarget.style.borderColor = 'var(--danger)'
+                          e.currentTarget.style.color = 'var(--danger)'
+                        }
+                      }}
+                      onMouseOut={e => {
+                        if (isFollowing) {
+                          e.currentTarget.style.borderColor = 'var(--border)'
+                          e.currentTarget.style.color = 'var(--text2)'
+                        }
+                      }}
+                    >
+                      {followLoading
+                        ? '...'
+                        : isFollowing
+                          ? 'Following'
+                          : '+ Follow'
                       }
-                    }}
-                    onMouseOut={e => {
-                      if (isFollowing) {
+                    </button>
+                  )}
+
+                  {isMe && currentUser && (
+                    <button
+                      onClick={() => setConfirmDeleteOpen(true)}
+                      disabled={deleteLoading}
+                      style={{
+                        padding: '8px 16px',
+                        background: 'transparent',
+                        color: 'var(--danger)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius)',
+                        fontFamily: 'var(--mono)',
+                        fontSize: 11,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        cursor: deleteLoading ? 'default' : 'pointer',
+                        transition: 'all 0.1s',
+                        flexShrink: 0,
+                      }}
+                      onMouseOver={e => {
+                        if (!deleteLoading) {
+                          e.currentTarget.style.borderColor = 'var(--danger)'
+                        }
+                      }}
+                      onMouseOut={e => {
                         e.currentTarget.style.borderColor = 'var(--border)'
-                        e.currentTarget.style.color = 'var(--text2)'
-                      }
-                    }}
-                  >
-                    {followLoading
-                      ? '...'
-                      : isFollowing
-                        ? 'Following'
-                        : '+ Follow'
-                    }
-                  </button>
-                )}
+                      }}
+                      title="Permanently delete your profile"
+                    >
+                      {deleteLoading ? 'Removing...' : 'Remove profile'}
+                    </button>
+                  )}
+                </div>
 
                 {/* Sign in prompt for guests */}
                 {!isMe && !currentUser && (
@@ -400,7 +476,21 @@ export default function UserProfileModal({ userId, onClose }) {
         />
       )}
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 640px) {
+          .pp-profile-modal-overlay {
+            padding: 16px 12px !important;
+          }
+          .pp-profile-modal {
+            max-width: 100% !important;
+          }
+          .pp-profile-modal-header {
+            padding: 14px 16px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

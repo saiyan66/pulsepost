@@ -1,13 +1,24 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-const WS_URL = import.meta.env.VITE_API_URL ? 
-import.meta.env.VITE_API_URL.replace('https://', 'wss://').replace('http://', 'ws://') : 'ws://localhost:8000'
+function buildWsUrl() {
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  const normalized = apiBase.replace(/\/+$/, '')
+  const withoutApiSuffix = normalized.endsWith('/api')
+    ? normalized.slice(0, -4)
+    : normalized
+  const wsBase = withoutApiSuffix
+    .replace('https://', 'wss://')
+    .replace('http://', 'ws://')
+  return `${wsBase}/ws`
+}
+
+const WS_URL = buildWsUrl()
 const RECONNECT_DELAY = 3000
 
 export function useWebSocket(token, onMessage) {
-  const wsRef        = useRef(null)
+  const wsRef = useRef(null)
   const reconnectRef = useRef(null)
-  const mountedRef   = useRef(true)
+  const mountedRef = useRef(true)
   const onMessageRef = useRef(onMessage)  
 
 

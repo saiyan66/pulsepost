@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
+from app.models.follow import Follow
 from app.models.user import User
 from app.core.security import hash_password, verify_password
 from app.schemas.user import UserRegisterSchema
@@ -53,3 +54,15 @@ class UserService:
         if not verify_password(password, user.hashed_password):
             return None
         return user
+
+    @staticmethod
+    async def delete_user(db: AsyncSession, user: User) -> None:
+        # Break follow edges first. Without this, SQLAlchemy may attempt to null
+        # composite primary-key FKs on Follow rows and crash.
+        await db.execute(
+            delete(Follow).where(
+                (Follow.follower_id == user.id) | (Follow.followed_id == user.id)
+            )
+        )
+        await db.delete(user)
+        await db.flush()

@@ -5,17 +5,20 @@ import { useToast } from '../components/UI/Toast.jsx'
 import PostCard from '../components/Post/PostCard.jsx'
 import PostDetail from '../components/Post/PostDetail.jsx'
 import UserListModal from '../components/UI/UserListModal.jsx'
+import ConfirmDialog from '../components/UI/ConfirmDialog.jsx'
 
 function initials(username) {
   return (username || '?').slice(0, 2).toUpperCase()
 }
 
 export default function Profile({ navigate }) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const toast = useToast()
 
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [selectedPost, setSelected] = useState(null)
   const [following, setFollowing] = useState([])
   const [followers, setFollowers] = useState([])
@@ -62,6 +65,23 @@ export default function Profile({ navigate }) {
     }
   }
 
+  async function handleDeleteProfile() {
+    if (deleteLoading) return
+    setDeleteLoading(true)
+    try {
+      await usersApi.deleteMe()
+      toast('Profile removed.')
+      logout()
+      navigate('auth')
+      window.location.reload()
+    } catch (err) {
+      toast(err.message, 'error')
+    } finally {
+      setDeleteLoading(false)
+      setConfirmDeleteOpen(false)
+    }
+  }
+
 
   if (!user) {
     return (
@@ -98,6 +118,18 @@ export default function Profile({ navigate }) {
 
   return (
     <>
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          title="Delete profile"
+          message="Delete your profile and all associated content?"
+          confirmText="Yes, delete"
+          cancelText="No"
+          danger
+          loading={deleteLoading}
+          onCancel={() => { if (!deleteLoading) setConfirmDeleteOpen(false) }}
+          onConfirm={handleDeleteProfile}
+        />
+
         {/* Profile header */}
         <div style={{
           padding: '28px 32px',
@@ -107,10 +139,17 @@ export default function Profile({ navigate }) {
           <div style={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             gap: 16,
             marginBottom: 20,
           }}>
             <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 16,
+              minWidth: 0,
+            }}>
+              <div style={{
               width: 52, height: 52,
               borderRadius: '50%',
               background: 'var(--bg3)',
@@ -143,7 +182,34 @@ export default function Profile({ navigate }) {
                 {user.email}
               </div>
             </div>
-        </div>
+            </div>
+
+            <button
+              onClick={() => setConfirmDeleteOpen(true)}
+              disabled={deleteLoading}
+              style={{
+                padding: '8px 16px',
+                background: 'transparent',
+                color: 'var(--danger)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius)',
+                fontFamily: 'var(--mono)',
+                fontSize: 11,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                cursor: deleteLoading ? 'default' : 'pointer',
+                transition: 'all 0.1s',
+                flexShrink: 0,
+              }}
+              onMouseOver={e => {
+                if (!deleteLoading) e.currentTarget.style.borderColor = 'var(--danger)'
+              }}
+              onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
+              title="Permanently delete your profile"
+            >
+              {deleteLoading ? 'Removing...' : 'Remove profile'}
+            </button>
+          </div>
 
         {/* Stats row */}
           <div style={{
