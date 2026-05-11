@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '../../utils/Auth.jsx'
 import { useToast } from './Toast.jsx'
+import { authApi } from '../../api/client.js'
+
 
 const inputStyle = {
   width: '100%',
@@ -37,6 +39,10 @@ export default function AuthModal({ onClose, onSuccess }) {
   const [regUsername, setRegUsername]     = useState('')
   const [regEmail, setRegEmail]           = useState('')
   const [regPassword, setRegPassword]     = useState('')
+  const [resetEmail, setResetEmail]         = useState('')
+  const [resetPassword, setResetPassword]   = useState('')
+  const [resetConfirm, setResetConfirm]     = useState('')
+  const [resetDone, setResetDone]           = useState(false)
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -75,6 +81,31 @@ export default function AuthModal({ onClose, onSuccess }) {
       setLoading(false)
     }
   }
+
+  async function handleReset(e) {
+  e.preventDefault()
+  if (!resetEmail || !resetPassword) {
+    toast('Fill in all fields', 'error')
+    return
+  }
+  if (resetPassword !== resetConfirm) {
+    toast('Passwords do not match', 'error')
+    return
+  }
+  if (resetPassword.length < 8) {
+    toast('Password must be at least 8 characters', 'error')
+    return
+  }
+  setLoading(true)
+  try {
+    await authApi.resetPassword(resetEmail, resetPassword)
+    setResetDone(true)
+  } catch(err) {
+    toast(err.message, 'error')
+  } finally {
+    setLoading(false)
+  }
+}
 
   return (
     <div
@@ -143,6 +174,7 @@ export default function AuthModal({ onClose, onSuccess }) {
             {[
               { key: 'login',    label: 'Sign In'        },
               { key: 'register', label: 'Register'       },
+              { key: 'reset',    label: 'Reset Password' },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -194,6 +226,26 @@ export default function AuthModal({ onClose, onSuccess }) {
                   onFocus={e => e.target.style.borderColor = 'var(--border2)'}
                   onBlur={e => e.target.style.borderColor = 'var(--border)'}
                 />
+              </div>
+              <div style={{
+                textAlign: 'right',
+                marginTop: -8,
+                marginBottom: 16,
+              }}>
+                <span
+                  onClick={() => setTab('reset')}
+                  style={{
+                    fontFamily: 'var(--mono)',
+                    fontSize: 10,
+                    color: 'var(--text3)',
+                    cursor: 'pointer',
+                    letterSpacing: '0.06em',
+                  }}
+                  onMouseOver={e => e.currentTarget.style.color = 'var(--accent)'}
+                  onMouseOut={e => e.currentTarget.style.color = 'var(--text3)'}
+                >
+                  Forgot password?
+                </span>
               </div>
               <button
                 type="submit"
@@ -307,6 +359,175 @@ export default function AuthModal({ onClose, onSuccess }) {
               </div>
             </form>
           )}
+          {tab === 'reset' && (
+  <div>
+    {resetDone ? (
+      // Success state
+      <div style={{
+        padding: '20px 0',
+        textAlign: 'center',
+      }}>
+        <div style={{
+          fontFamily: 'var(--serif)',
+          fontSize: 18,
+          color: 'var(--ink)',
+          marginBottom: 10,
+        }}>
+          Done.
+        </div>
+        <p style={{
+          fontFamily: 'var(--mono)',
+          fontSize: 11,
+          color: 'var(--text3)',
+          lineHeight: 1.7,
+          marginBottom: 20,
+        }}>
+          If that email was registered, your password has been updated.
+          Sign in with your new password.
+        </p>
+        <button
+          onClick={() => {
+            setTab('login')
+            setResetDone(false)
+            setResetEmail('')
+            setResetPassword('')
+            setResetConfirm('')
+          }}
+          style={{
+            padding: '8px 20px',
+            background: 'var(--text)',
+            color: 'var(--paper)',
+            border: 'none',
+            borderRadius: 'var(--radius)',
+            fontFamily: 'var(--mono)',
+            fontSize: 11,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+          }}
+        >
+          Sign In →
+        </button>
+      </div>
+    ) : (
+      // Reset form
+      <form onSubmit={handleReset}>
+        <div style={{
+          fontFamily: 'var(--mono)',
+          fontSize: 11,
+          color: 'var(--text3)',
+          lineHeight: 1.7,
+          marginBottom: 20,
+          padding: '10px 12px',
+          background: 'var(--bg2)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)',
+        }}>
+          Enter your email and choose a new password.
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Email</label>
+          <input
+            type="email"
+            value={resetEmail}
+            onChange={e => setResetEmail(e.target.value)}
+            placeholder="you@example.com"
+            style={inputStyle}
+            onFocus={e => e.target.style.borderColor = 'var(--border2)'}
+            onBlur={e => e.target.style.borderColor = 'var(--border)'}
+          />
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>New Password</label>
+          <input
+            type="password"
+            value={resetPassword}
+            onChange={e => setResetPassword(e.target.value)}
+            placeholder="min 8 characters"
+            style={inputStyle}
+            onFocus={e => e.target.style.borderColor = 'var(--border2)'}
+            onBlur={e => e.target.style.borderColor = 'var(--border)'}
+          />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>Confirm Password</label>
+          <input
+            type="password"
+            value={resetConfirm}
+            onChange={e => setResetConfirm(e.target.value)}
+            placeholder="repeat new password"
+            style={{
+              ...inputStyle,
+              borderColor: resetConfirm && resetConfirm !== resetPassword
+                ? 'var(--danger)'
+                : undefined,
+            }}
+            onFocus={e => e.target.style.borderColor = 'var(--border2)'}
+            onBlur={e => {
+              e.target.style.borderColor = resetConfirm !== resetPassword
+                ? 'var(--danger)'
+                : 'var(--border)'
+            }}
+          />
+          {resetConfirm && resetConfirm !== resetPassword && (
+            <div style={{
+              fontFamily: 'var(--mono)',
+              fontSize: 10,
+              color: 'var(--danger)',
+              marginTop: 4,
+            }}>
+              Passwords do not match
+            </div>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading || !resetEmail || !resetPassword || resetPassword !== resetConfirm}
+          style={{
+            width: '100%',
+            padding: '10px',
+            background: loading || !resetEmail || !resetPassword || resetPassword !== resetConfirm
+              ? 'var(--bg3)'
+              : 'var(--text)',
+            color: loading || !resetEmail || !resetPassword || resetPassword !== resetConfirm
+              ? 'var(--text3)'
+              : 'var(--paper)',
+            border: 'none',
+            borderRadius: 'var(--radius)',
+            fontFamily: 'var(--mono)',
+            fontSize: 11,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            cursor: loading ? 'default' : 'pointer',
+            transition: 'all 0.1s',
+          }}
+        >
+          {loading ? 'Updating...' : 'Reset Password →'}
+        </button>
+
+        <div style={{
+          marginTop: 14,
+          fontFamily: 'var(--mono)',
+          fontSize: 11,
+          color: 'var(--text3)',
+          textAlign: 'center',
+        }}>
+          Remember it?{' '}
+          <span
+            onClick={() => setTab('login')}
+            style={{ color: 'var(--accent)', cursor: 'pointer' }}
+          >
+            Sign in
+          </span>
+        </div>
+      </form>
+    )}
+  </div>
+)}
         </div>
       </div>
     </div>

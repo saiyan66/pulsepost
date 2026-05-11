@@ -34,6 +34,10 @@ export const authApi = {
   register: (username, email, password) =>
     request('POST', '/api/auth/register', { username, email, password }, false),
 
+  resetPassword: (email, new_password) =>
+  request('POST', '/api/auth/reset-password', { email, new_password }, false),
+
+
   login: (email, password) =>
     request('POST', '/api/auth/login', { email, password }, false),
 

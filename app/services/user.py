@@ -66,3 +66,22 @@ class UserService:
         )
         await db.delete(user)
         await db.flush()
+
+    @staticmethod
+    async def reset_password(
+        db: AsyncSession,
+        email: str,
+        new_password: str,
+    ) -> bool:
+        """
+        Resets a user's password directly.
+        Returns True if successful, False if user not found.
+        In production you'd verify identity via email token first.
+        """
+        user = await UserService.get_by_email(db, email)
+        if not user:
+            return False
+
+        user.hashed_password = hash_password(new_password)
+        await db.flush()
+        return True
