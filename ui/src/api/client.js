@@ -17,17 +17,27 @@ async function request(method, path, body = null, requiresAuth = true) {
 
 
   if (res.status === 204) return null;
-  const data = await res.json();
+  const raw = await res.text();
+  let data = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = null;
+  }
 
   if (!res.ok) {
-    throw new Error(
-      typeof data.detail === 'string'
+    const detail =
+      typeof data?.detail === 'string'
         ? data.detail
-        : JSON.stringify(data.detail)
+        : data?.detail
+          ? JSON.stringify(data.detail)
+          : raw || `Request failed with status ${res.status}`;
+    throw new Error(
+      detail
     );
   }
 
-  return data;
+  return data ?? {};
 }
 
 export const authApi = {
@@ -42,6 +52,9 @@ export const authApi = {
 
   refresh: (refresh_token) =>
     request('POST', '/api/auth/refresh', { refresh_token }),
+
+  resetPassword: (email, new_password) =>
+  request('POST', '/api/auth/reset-password', { email, new_password }, false),
 };
 
  

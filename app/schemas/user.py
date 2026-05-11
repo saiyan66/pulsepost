@@ -53,3 +53,15 @@ class TokenSchema(BaseModel):
 class TokenPayloadSchema(BaseModel):
     sub: str
     type: str
+    
+
+class PasswordResetSchema(BaseModel):
+    email: EmailStr
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        return v

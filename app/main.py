@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import subprocess
+import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import auth, posts, users
@@ -13,7 +14,7 @@ def run_migrations():
     """
     try:
         result = subprocess.run(
-            ["alembic", "upgrade", "head"],
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
             capture_output=True,
             text=True,
             timeout=60,
@@ -46,7 +47,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://pulsepost-ui.vercel.app",  
+        "https://*.vercel.app",             
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
