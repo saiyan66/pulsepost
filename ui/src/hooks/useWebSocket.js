@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-const WS_URL = 'ws://localhost:8000/ws'
+const WS_URL = import.meta.env.VITE_API_URL ? 
+import.meta.env.VITE_API_URL.replace('https://', 'wss://').replace('http://', 'ws://') : 'ws://localhost:8000'
 const RECONNECT_DELAY = 3000
 
 export function useWebSocket(token, onMessage) {
